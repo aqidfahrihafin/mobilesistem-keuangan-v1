@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug-build-only override (Gradle merges src/debug/res on top of
+  src/main/res for debug builds, replacing any same-named resource) -
+  Android blocks plain HTTP (cleartext) traffic by default since API 28.
+  This allows it everywhere so a locally-run app can reach a Laravel dev
+  server (`php artisan serve`, plain HTTP) whether that's via the Android
+  emulator alias (10.0.2.2) or a physical device hitting the dev machine's
+  LAN IP (which varies per network, so it can't be listed here
+  individually).
+
+  Only ever bundled into debug builds - src/main's own
+  network_security_config.xml (what release builds actually use) does not
+  permit cleartext at all, so there is nothing to remember to "tighten
+  before shipping" anymore.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

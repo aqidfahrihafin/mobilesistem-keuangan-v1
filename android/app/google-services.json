@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "827988935712",
+    "project_id": "e-mall-annuqayah-6c589",
+    "storage_bucket": "e-mall-annuqayah-6c589.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:827988935712:android:96091bfdcde6aa43762845",
+        "android_client_info": {
+          "package_name": "id.pesantren.latee.wali_santri"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCbYFFAL0lhdrbLjcRCM_TboSgr-iAag4c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

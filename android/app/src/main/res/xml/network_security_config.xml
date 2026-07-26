@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The real (release-build) config - no cleartext permitted anywhere.
+  Android already blocks plain HTTP by default since API 28, so this file
+  mostly exists to be explicit about it and to give debug builds something
+  to override (see src/debug/res/xml/network_security_config.xml, which
+  Gradle merges on top of this one only for debug builds, to reach a
+  plain-HTTP local dev server). Release/profile builds get this file as-is.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>
