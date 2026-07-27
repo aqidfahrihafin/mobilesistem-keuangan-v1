@@ -15,6 +15,19 @@ class ChangelogEntry {
 /// backend changelog endpoint, this list is the source of truth.
 const changelog = <ChangelogEntry>[
   ChangelogEntry(
+    version: '1.1.0',
+    date: 'Juli 2026',
+    changes: [
+      'Tampilan login dan autentikasi sidik jari yang lebih modern dan konsisten.',
+      'Daftar tagihan baru yang lebih ringkas dengan halaman detail dan pembayaran terpusat.',
+      'QRIS pembayaran Top Up dan tagihan kini dapat disimpan langsung ke galeri.',
+      'Penyempurnaan pilihan nominal Top Up, transfer saldo, kartu laporan, dan seluruh filter.',
+      'Login atau unlock dengan sidik jari selalu kembali ke halaman Beranda.',
+      'Optimasi render modal, gambar jaringan, polling, dan dependency agar aplikasi lebih ringan.',
+      'Radius visual diseragamkan untuk tampilan yang lebih rapi dan konsisten.',
+    ],
+  ),
+  ChangelogEntry(
     version: '1.0.0',
     date: 'Juli 2026',
     changes: [

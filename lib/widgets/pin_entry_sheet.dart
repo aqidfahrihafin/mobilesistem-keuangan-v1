@@ -65,7 +65,7 @@ class _PinEntrySheetState extends State<_PinEntrySheet> {
                 height: 4,
                 decoration: BoxDecoration(
                   color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
               const SizedBox(height: 22),

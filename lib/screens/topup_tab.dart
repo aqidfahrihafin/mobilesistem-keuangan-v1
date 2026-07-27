@@ -263,7 +263,7 @@ class _TopupTabState extends State<TopupTab> {
                     LayoutBuilder(
                       builder: (context, constraints) {
                         const gap = 8.0;
-                        final itemWidth = (constraints.maxWidth - gap * 2) / 3;
+                        final itemWidth = (constraints.maxWidth - gap) / 2;
 
                         return Wrap(
                           spacing: gap,
@@ -305,7 +305,7 @@ class _TopupTabState extends State<TopupTab> {
                           ),
                           decoration: BoxDecoration(
                             color: const Color(0xDCF4F9F8),
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(10),
                             border: Border.all(color: const Color(0xCCFFFFFF)),
                           ),
                           child: Row(
@@ -497,45 +497,41 @@ class _NominalChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(10),
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        height: 52,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: selected ? _teal : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: selected ? _teal : const Color(0xFFD8DBE2)),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: _teal.withValues(alpha: 0.25),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ]
-              : null,
+          color: selected ? const Color(0xFFE5F4F1) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected ? _teal : const Color(0xFFE2E8F0),
+            width: selected ? 1.4 : 1,
+          ),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            if (selected) ...[
-              const Icon(
-                Icons.check_circle_rounded,
-                color: Colors.white,
-                size: 14,
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: selected ? _teal : const Color(0xFF334155),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
               ),
-              const SizedBox(width: 5),
-            ],
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: selected ? Colors.white : Colors.black87,
-                fontWeight: FontWeight.w700,
-                fontSize: 12.5,
-              ),
+            ),
+            Icon(
+              selected
+                  ? Icons.check_circle_rounded
+                  : Icons.add_circle_outline_rounded,
+              color: selected ? _teal : const Color(0xFF94A3B8),
+              size: 18,
             ),
           ],
         ),

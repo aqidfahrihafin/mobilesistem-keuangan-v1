@@ -141,7 +141,7 @@ class _ScanBayarScreenState extends State<ScanBayarScreen> {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: const Color(0xFFF7F8FA),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
           children: [
@@ -320,7 +320,7 @@ class _ScanBayarScreenState extends State<ScanBayarScreen> {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: const Color(0xFFB91C1C).withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     _lookupError!,
@@ -357,7 +357,7 @@ class _ScanBayarScreenState extends State<ScanBayarScreen> {
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: const Color(0xFFE9EBEF)),
               ),
               child: Row(
@@ -427,7 +427,7 @@ class _ScanBayarScreenState extends State<ScanBayarScreen> {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: const Color(0xFFE9EBEF)),
                 ),
                 child: Row(

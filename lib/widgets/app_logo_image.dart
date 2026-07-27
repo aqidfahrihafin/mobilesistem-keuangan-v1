@@ -28,6 +28,7 @@ class AppLogoImage extends StatelessWidget {
               logoUrl,
               key: ValueKey(logoUrl),
               fit: fit,
+              cacheWidth: 256,
               errorBuilder: (context, error, stackTrace) =>
                   Image.asset('assets/images/logo.png', fit: fit),
             ),

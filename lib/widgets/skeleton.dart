@@ -14,7 +14,7 @@ class ShimmerBox extends StatefulWidget {
     super.key,
     this.width,
     required this.height,
-    this.borderRadius = const BorderRadius.all(Radius.circular(8)),
+    this.borderRadius = const BorderRadius.all(Radius.circular(10)),
   });
 
   @override
@@ -93,7 +93,7 @@ class SkeletonListRow extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFE9EBEF)),
       ),
       child: Row(
@@ -101,7 +101,7 @@ class SkeletonListRow extends StatelessWidget {
           const ShimmerBox(
             width: 36,
             height: 36,
-            borderRadius: BorderRadius.all(Radius.circular(18)),
+            borderRadius: BorderRadius.all(Radius.circular(10)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -150,7 +150,7 @@ class SkeletonPreviewCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFE9EBEF)),
       ),
       child: Column(
@@ -167,7 +167,7 @@ class SkeletonPreviewCard extends StatelessWidget {
                 const ShimmerBox(
                   width: 32,
                   height: 32,
-                  borderRadius: BorderRadius.all(Radius.circular(16)),
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -204,8 +204,8 @@ class SkeletonHomePage extends StatelessWidget {
       children: [
         ClipRRect(
           borderRadius: const BorderRadius.only(
-            bottomLeft: Radius.circular(40),
-            bottomRight: Radius.circular(40),
+            bottomLeft: Radius.circular(10),
+            bottomRight: Radius.circular(10),
           ),
           child: Container(
             height: 210,
@@ -218,7 +218,7 @@ class SkeletonHomePage extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(color: const Color(0xFFE9EBEF)),
             ),
             child: const Column(

@@ -195,7 +195,7 @@ class _Header extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: const Color(0xDDF1F8F6),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0x80A9CEC8)),
         boxShadow: const [
           BoxShadow(
@@ -264,7 +264,7 @@ class _StepDots extends StatelessWidget {
           height: 8,
           decoration: BoxDecoration(
             color: (active || done) ? _teal : const Color(0xFFE1E4E9),
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(10),
           ),
         );
       }),
@@ -364,7 +364,7 @@ class _PinStep extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(18, 20, 18, 22),
           decoration: BoxDecoration(
             color: const Color(0xDDF1F8F6),
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: error != null ? Colors.red[200]! : const Color(0x80A9CEC8),
             ),
@@ -475,7 +475,7 @@ class _PinSecurityTip extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: _teal.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: _teal.withValues(alpha: 0.15)),
       ),
       child: Row(

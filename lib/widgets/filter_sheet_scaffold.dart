@@ -41,7 +41,7 @@ class FilterSheetScaffold extends StatelessWidget {
                 height: 4,
                 decoration: BoxDecoration(
                   color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
               Padding(
@@ -71,9 +71,12 @@ class FilterSheetScaffold extends StatelessWidget {
               Flexible(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: sections,
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: sections,
+                    ),
                   ),
                 ),
               ),
@@ -89,7 +92,7 @@ class FilterSheetScaffold extends StatelessWidget {
                             foregroundColor: Colors.grey[700],
                             side: const BorderSide(color: Color(0xFFD8DBE2)),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(13),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                           ),
                           onPressed: onReset,
@@ -110,7 +113,7 @@ class FilterSheetScaffold extends StatelessWidget {
                             backgroundColor: _teal,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(13),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                           ),
                           onPressed: onTerapkan,
@@ -156,7 +159,10 @@ class FilterSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          child,
+          SizedBox(
+            width: double.infinity,
+            child: Align(alignment: Alignment.centerLeft, child: child),
+          ),
         ],
       ),
     );
@@ -202,7 +208,7 @@ class FilterChip2 extends StatelessWidget {
         fontSize: 12.5,
       ),
       side: BorderSide(color: selected ? _teal : const Color(0xFFD8DBE2)),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     );
   }
 }

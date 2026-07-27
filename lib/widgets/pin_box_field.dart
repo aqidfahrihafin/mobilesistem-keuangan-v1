@@ -117,7 +117,7 @@ class _PinBoxFieldState extends State<PinBoxField> {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: filled ? _teal.withValues(alpha: 0.08) : _bg,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: borderColor,
                     width: filled || isCursor || widget.hasError ? 2 : 1.3,
@@ -213,7 +213,7 @@ class _BlinkingCursorState extends State<_BlinkingCursor>
         height: 22,
         decoration: BoxDecoration(
           color: _teal,
-          borderRadius: BorderRadius.circular(1),
+          borderRadius: BorderRadius.circular(10),
         ),
       ),
     );

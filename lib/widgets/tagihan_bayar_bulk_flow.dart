@@ -159,7 +159,7 @@ class _BulkKonfirmasiSheet extends StatelessWidget {
                 height: 4,
                 decoration: BoxDecoration(
                   color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
             ),
@@ -180,7 +180,7 @@ class _BulkKonfirmasiSheet extends StatelessWidget {
               constraints: const BoxConstraints(maxHeight: 220),
               decoration: BoxDecoration(
                 color: _bg,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: ListView.separated(
                 shrinkWrap: true,
@@ -242,7 +242,7 @@ class _BulkKonfirmasiSheet extends StatelessWidget {
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: _bg,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Column(
                 children: [
@@ -290,7 +290,7 @@ class _BulkKonfirmasiSheet extends StatelessWidget {
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
                 onPressed: bisaBayar
@@ -422,7 +422,7 @@ class _BulkProsesDialogState extends State<_BulkProsesDialog> {
 
     return Dialog(
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: Padding(
         padding: const EdgeInsets.all(22),
         child: hasil == null ? _buildProgress() : _buildHasil(hasil),
@@ -500,7 +500,7 @@ class _BulkProsesDialogState extends State<_BulkProsesDialog> {
           constraints: const BoxConstraints(maxHeight: 240),
           decoration: BoxDecoration(
             color: _bg,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: ListView.separated(
             shrinkWrap: true,
@@ -579,7 +579,7 @@ class _BulkProsesDialogState extends State<_BulkProsesDialog> {
               elevation: 0,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
             onPressed: () => Navigator.of(context).pop(hasil),

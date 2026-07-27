@@ -109,7 +109,7 @@ class WaliSantriApp extends StatelessWidget {
           surfaceTintColor: Colors.transparent,
           margin: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(10),
             side: const BorderSide(color: Color(0x80A9CEC8), width: 1.1),
           ),
         ),
@@ -118,7 +118,7 @@ class WaliSantriApp extends StatelessWidget {
           backgroundColor: const Color(0xF2F4F9F8),
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(10),
             side: const BorderSide(color: Color(0xCCFFFFFF)),
           ),
         ),
@@ -128,7 +128,7 @@ class WaliSantriApp extends StatelessWidget {
           surfaceTintColor: Colors.transparent,
           showDragHandle: true,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
           ),
         ),
         dividerTheme: const DividerThemeData(
@@ -145,7 +145,7 @@ class WaliSantriApp extends StatelessWidget {
         snackBarTheme: SnackBarThemeData(
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
           ),
         ),
         filledButtonTheme: FilledButtonThemeData(
@@ -153,7 +153,7 @@ class WaliSantriApp extends StatelessWidget {
             backgroundColor: _teal,
             elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(10),
             ),
           ),
         ),
@@ -162,7 +162,7 @@ class WaliSantriApp extends StatelessWidget {
             foregroundColor: _teal,
             side: const BorderSide(color: _teal),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(10),
             ),
           ),
         ),
@@ -174,19 +174,19 @@ class WaliSantriApp extends StatelessWidget {
             vertical: 14,
           ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: _teal, width: 1.5),
           ),
           errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
           ),
         ),

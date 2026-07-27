@@ -32,6 +32,16 @@ class BannerProvider extends ChangeNotifier {
   Future<void> _load() async {
     try {
       final data = await _api.getBanners();
+      final unchanged =
+          data.length == banners.length &&
+          List.generate(data.length, (i) => i).every(
+            (i) =>
+                data[i].id == banners[i].id &&
+                data[i].judul == banners[i].judul &&
+                data[i].gambarUrl == banners[i].gambarUrl &&
+                data[i].linkUrl == banners[i].linkUrl,
+          );
+      if (unchanged) return;
       banners = data;
       notifyListeners();
     } catch (_) {

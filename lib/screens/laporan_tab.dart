@@ -671,7 +671,7 @@ class _LaporanRingkasanState extends State<_LaporanRingkasan> {
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: const Color(0xFFE9EBEF)),
                     ),
                     child: Column(
@@ -739,7 +739,7 @@ class _LaporanRingkasanState extends State<_LaporanRingkasan> {
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(13),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
                     icon: _mengunduh
@@ -783,12 +783,23 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isPositive = !value.startsWith('-');
+    final effectiveColor = full && !isPositive
+        ? const Color(0xFFB91C1C)
+        : color;
+    final surfaceColor = full
+        ? (isPositive ? const Color(0xFFEAF6F3) : const Color(0xFFFDF0F0))
+        : effectiveColor.withValues(alpha: 0.07);
+
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.symmetric(
+        horizontal: full ? 16 : 13,
+        vertical: full ? 15 : 14,
+      ),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE9EBEF)),
+        color: surfaceColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: effectiveColor.withValues(alpha: 0.14)),
       ),
       child: Row(
         crossAxisAlignment: full
@@ -796,13 +807,13 @@ class _SummaryCard extends StatelessWidget {
             : CrossAxisAlignment.start,
         children: [
           Container(
-            width: 34,
-            height: 34,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: color, size: 16),
+            child: Icon(icon, color: effectiveColor, size: 18),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -812,15 +823,22 @@ class _SummaryCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(fontSize: 11.5, color: Colors.grey[600]),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: Color(0xFF64748B),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Text(
                   value,
                   style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    color: color,
+                    fontWeight: FontWeight.w800,
+                    fontSize: full ? 17 : 14,
+                    color: const Color(0xFF0F172A),
+                    letterSpacing: -0.3,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),

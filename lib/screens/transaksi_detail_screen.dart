@@ -380,7 +380,7 @@ class _TransaksiDetailScreenState extends State<TransaksiDetailScreen> {
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: const Color(0xFFE9EBEF)),
                     ),
                     child: Column(
@@ -525,7 +525,7 @@ class _TransaksiDetailScreenState extends State<TransaksiDetailScreen> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: const Color(0xFFE9EBEF)),
                     ),
                     child: Row(
@@ -810,7 +810,7 @@ class _ReferensiCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFE9EBEF)),
       ),
       child: Stack(
@@ -906,7 +906,7 @@ class _TagihanRingkasCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFE9EBEF)),
       ),
       child: Column(

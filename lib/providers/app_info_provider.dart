@@ -39,6 +39,11 @@ class AppInfoProvider extends ChangeNotifier {
   Future<void> _load() async {
     try {
       final info = await _api.getAppInfo();
+      if (namaAplikasi == info.namaAplikasi &&
+          namaPondok == info.namaPondok &&
+          logoUrl == info.logoUrl) {
+        return;
+      }
       namaAplikasi = info.namaAplikasi;
       namaPondok = info.namaPondok;
       logoUrl = info.logoUrl;

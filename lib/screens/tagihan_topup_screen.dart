@@ -243,7 +243,7 @@ class _TagihanTopupScreenState extends State<TagihanTopupScreen> {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: const Color(0xFFEFF8F6),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: _teal.withValues(alpha: 0.15)),
                 ),
                 child: Row(

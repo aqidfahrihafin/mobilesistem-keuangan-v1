@@ -21,12 +21,12 @@ class ActiveFilterPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
           color: active ? _teal.withValues(alpha: 0.08) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: active ? _teal : const Color(0xFFD8DBE2)),
         ),
         child: Text(
@@ -104,7 +104,7 @@ class ActiveFilterBar extends StatelessWidget {
               const SizedBox(width: 10),
               InkWell(
                 onTap: onOpenFilter,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(10),
                 child: Container(
                   width: 34,
                   height: 34,

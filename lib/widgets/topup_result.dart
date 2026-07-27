@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:gal/gal.dart';
+import 'package:http/http.dart' as http;
 
 import '../models/topup.dart';
 import '../utils/formatters.dart';
@@ -37,16 +39,16 @@ class MetodeTile extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(10),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
         onTap: onTap,
         child: Container(
           height: 116,
           padding: const EdgeInsets.fromLTRB(14, 13, 12, 13),
           decoration: BoxDecoration(
             color: const Color(0xE6F4F9F8),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: selected
                   ? _teal.withValues(alpha: 0.35)
@@ -70,7 +72,7 @@ class MetodeTile extends StatelessWidget {
                     height: 54,
                     decoration: BoxDecoration(
                       color: const Color(0xECFAFDFC),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: selected
                             ? _teal.withValues(alpha: 0.35)
@@ -291,7 +293,7 @@ class VaCard extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: _bg,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Column(
               children: [
@@ -343,13 +345,82 @@ class VaCard extends StatelessWidget {
   }
 }
 
-class QrisCard extends StatelessWidget {
+class QrisCard extends StatefulWidget {
   final Topup topup;
 
   const QrisCard({super.key, required this.topup});
 
   @override
+  State<QrisCard> createState() => _QrisCardState();
+}
+
+class _QrisCardState extends State<QrisCard> {
+  bool _saving = false;
+
+  Future<void> _saveQr() async {
+    final qrUrl = widget.topup.qrUrl;
+    if (qrUrl == null || _saving) return;
+
+    setState(() => _saving = true);
+    try {
+      var allowed = await Gal.hasAccess();
+      if (!allowed) {
+        await Gal.requestAccess();
+        allowed = await Gal.hasAccess();
+      }
+      if (!allowed) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Izin galeri diperlukan untuk menyimpan QRIS.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      final response = await http.get(Uri.parse(qrUrl));
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw Exception('QRIS tidak dapat diunduh.');
+      }
+      await Gal.putImageBytes(response.bodyBytes);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle_outline, color: Colors.white, size: 19),
+              SizedBox(width: 9),
+              Text('QRIS berhasil disimpan ke galeri.'),
+            ],
+          ),
+          backgroundColor: _teal,
+        ),
+      );
+    } on GalException catch (error) {
+      if (!mounted) return;
+      final message = error.type == GalExceptionType.accessDenied
+          ? 'Izin galeri diperlukan untuk menyimpan QRIS.'
+          : 'QRIS gagal disimpan. Silakan coba lagi.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: Colors.red),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('QRIS gagal diunduh. Periksa koneksi lalu coba lagi.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final topup = widget.topup;
     return FlatCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -388,7 +459,7 @@ class QrisCard extends StatelessWidget {
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: _bg,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: topup.qrUrl == null
                   ? const Center(child: Icon(Icons.qr_code_2, size: 64))
@@ -423,6 +494,29 @@ class QrisCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+          if (topup.qrUrl != null) ...[
+            SizedBox(
+              height: 48,
+              child: OutlinedButton.icon(
+                onPressed: _saving ? null : _saveQr,
+                icon: _saving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: _teal,
+                        ),
+                      )
+                    : const Icon(Icons.download_rounded, size: 20),
+                label: Text(
+                  _saving ? 'Menyimpan QR...' : 'Simpan QR ke Galeri',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
           JumlahBayarRow(
             nominal: topup.nominalDiminta,
             biaya: topup.biayaDitanggungWali ? topup.biayaMidtrans : null,
@@ -563,7 +657,7 @@ class StatusPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
         statusTopupLabel[status] ?? status,

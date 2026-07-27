@@ -35,7 +35,7 @@ class SaldoMinimumNotice extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _amberBg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: _amberBorder),
       ),
       child: Row(

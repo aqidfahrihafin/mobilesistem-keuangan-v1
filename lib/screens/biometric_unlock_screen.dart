@@ -1,19 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
+import '../providers/tab_index_provider.dart';
 import '../services/auth_service.dart';
 import '../services/biometric_service.dart';
-import '../widgets/app_logo_image.dart';
-import '../widgets/flat_card.dart';
+import '../widgets/auth_brand_header.dart';
 
-const _bg = Colors.transparent;
 const _teal = Color(0xFF0F766E);
 
-/// Shown by AuthGate whenever AuthService.needsBiometricUnlock is true -
-/// either at a cold start with biometric login enabled, or after
-/// SessionActivityGuard soft-locks the app for inactivity. The token stays
-/// valid throughout; this is purely a local gate in front of it.
 class BiometricUnlockScreen extends StatefulWidget {
   const BiometricUnlockScreen({super.key});
 
@@ -24,50 +18,45 @@ class BiometricUnlockScreen extends StatefulWidget {
 class _BiometricUnlockScreenState extends State<BiometricUnlockScreen> {
   bool _checking = false;
   String? _error;
-  bool _showGantiPassword = false;
+  bool _showPasswordFallback = false;
 
   @override
   void initState() {
     super.initState();
-    // Prompt immediately on arrival - the tap-to-retry circle below covers
-    // cancellation/failure, so the wali doesn't have to tap twice on the
-    // common path.
     WidgetsBinding.instance.addPostFrameCallback((_) => _unlock());
   }
 
   Future<void> _unlock() async {
     if (_checking) return;
-
     setState(() {
       _checking = true;
       _error = null;
     });
 
     final result = await context.read<AuthService>().unlockWithBiometrics();
-
     if (!mounted) return;
 
     switch (result) {
       case BiometricAuthResult.success:
-        break; // AuthGate rebuilds automatically.
+        context.read<TabIndexProvider>().go(0);
+        break;
       case BiometricAuthResult.notSupported:
       case BiometricAuthResult.notEnrolled:
         setState(() {
           _error =
-              'Sidik jari tidak tersedia lagi di perangkat ini. Silakan masuk dengan kata sandi.';
-          _showGantiPassword = true;
+              'Sidik jari tidak tersedia. Silakan masuk dengan kata sandi.';
+          _showPasswordFallback = true;
         });
       case BiometricAuthResult.lockedOut:
         setState(() {
           _error =
-              'Terlalu banyak percobaan. Coba lagi nanti, atau masuk dengan kata sandi.';
-          _showGantiPassword = true;
+              'Terlalu banyak percobaan. Coba lagi nanti atau gunakan kata sandi.';
+          _showPasswordFallback = true;
         });
       case BiometricAuthResult.failedOrCancelled:
         setState(() => _error = 'Verifikasi dibatalkan atau tidak cocok.');
     }
-
-    setState(() => _checking = false);
+    if (mounted) setState(() => _checking = false);
   }
 
   @override
@@ -75,215 +64,202 @@ class _BiometricUnlockScreenState extends State<BiometricUnlockScreen> {
     final nama = context.watch<AuthService>().user?.name.split(' ').first;
 
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
-              padding: const EdgeInsets.all(22),
+              padding: const EdgeInsets.fromLTRB(28, 28, 28, 22),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 44,
+                  minHeight: constraints.maxHeight - 50,
                 ),
-                child: IntrinsicHeight(
-                  child: Column(
-                    children: [
-                      Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const AuthBrandHeader(),
+                    const SizedBox(height: 54),
+                    Text.rich(
+                      TextSpan(
+                        style: const TextStyle(
+                          color: Color(0xFF0F172A),
+                          fontSize: 24,
+                          height: 1.2,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                        ),
                         children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            padding: const EdgeInsets.all(7),
-                            decoration: BoxDecoration(
-                              color: const Color(0xDCF4F9F8),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: const Color(0xCCFFFFFF),
-                              ),
+                          const TextSpan(text: 'Selamat datang kembali'),
+                          if (nama != null) ...[
+                            const TextSpan(text: ',\n'),
+                            TextSpan(
+                              text: nama,
+                              style: const TextStyle(color: _teal),
                             ),
-                            child: const AppLogoImage(),
-                          ),
-                          const SizedBox(width: 10),
-                          const Text(
-                            'E-Mall Annuqayah',
-                            style: TextStyle(
-                              color: Color(0xFF17212B),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                          ],
                         ],
                       ),
-                      const Spacer(),
-                      FlatCard(
-                        padding: const EdgeInsets.fromLTRB(24, 28, 24, 22),
-                        child: Column(
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Verifikasi sidik jari untuk membuka akun Anda.',
+                      style: TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 14,
+                        height: 1.45,
+                      ),
+                    ),
+                    const SizedBox(height: 42),
+                    Center(
+                      child: GestureDetector(
+                        onTap: _checking ? null : _unlock,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          width: 132,
+                          height: 132,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F5F3),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: _teal.withValues(
+                                alpha: _checking ? 0.5 : 0.18,
+                              ),
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Container(
+                            width: 88,
+                            height: 88,
+                            decoration: BoxDecoration(
+                              color: _teal,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            alignment: Alignment.center,
+                            child: _checking
+                                ? const SizedBox(
+                                    width: 27,
+                                    height: 27,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.4,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.fingerprint_rounded,
+                                    color: Colors.white,
+                                    size: 50,
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    Text(
+                      _checking ? 'Memeriksa...' : 'Sentuh untuk masuk',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Color(0xFF0F172A),
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    const Text(
+                      'Gunakan sidik jari yang terdaftar',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 12.5,
+                      ),
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 24),
+                      Container(
+                        padding: const EdgeInsets.all(13),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFDECEC),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0x33B91C1C)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text.rich(
-                              TextSpan(
-                                style: GoogleFonts.newsreader(
-                                  fontSize: 25,
-                                  height: 1.25,
-                                  color: const Color(0xFF17212B),
-                                ),
-                                children: [
-                                  const TextSpan(
-                                    text: 'Selamat datang kembali,\n',
-                                  ),
-                                  TextSpan(
-                                    text: nama != null ? '$nama.' : 'Anda.',
-                                    style: GoogleFonts.newsreader(
-                                      fontSize: 26,
-                                      fontStyle: FontStyle.italic,
-                                      fontWeight: FontWeight.w600,
-                                      color: _teal,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              textAlign: TextAlign.center,
+                            const Icon(
+                              Icons.warning_amber_rounded,
+                              color: Color(0xFFB91C1C),
+                              size: 19,
                             ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Verifikasi sidik jari untuk membuka akun Anda.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Color(0xFF667085),
-                                fontSize: 13,
-                              ),
-                            ),
-                            const SizedBox(height: 28),
-                            GestureDetector(
-                              onTap: _checking ? null : _unlock,
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 220),
-                                width: 106,
-                                height: 106,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(32),
-                                  color: _teal.withValues(alpha: 0.07),
-                                  border: Border.all(
-                                    color: _teal.withValues(
-                                      alpha: _checking ? 0.4 : 0.16,
-                                    ),
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: _teal.withValues(alpha: 0.12),
-                                      blurRadius: 22,
-                                      offset: const Offset(0, 10),
-                                    ),
-                                  ],
-                                ),
-                                alignment: Alignment.center,
-                                child: Container(
-                                  width: 72,
-                                  height: 72,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        _teal.withValues(alpha: 0.14),
-                                        _teal.withValues(alpha: 0.06),
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(24),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: _checking
-                                      ? const SizedBox(
-                                          width: 25,
-                                          height: 25,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2.4,
-                                            color: _teal,
-                                          ),
-                                        )
-                                      : const Icon(
-                                          Icons.fingerprint_rounded,
-                                          color: _teal,
-                                          size: 42,
-                                        ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              _checking ? 'Memeriksa...' : 'Sentuh untuk masuk',
-                              style: const TextStyle(
-                                color: Color(0xFF667085),
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            if (_error != null) ...[
-                              const SizedBox(height: 16),
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(13),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xCCFDECEC),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: const Color(0x33B91C1C),
-                                  ),
-                                ),
-                                child: Text(
-                                  _error!,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Color(0xFFB91C1C),
-                                    fontSize: 12.5,
-                                  ),
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 24),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 50,
-                              child: OutlinedButton.icon(
-                                onPressed: () =>
-                                    context.read<AuthService>().logout(),
-                                icon: const Icon(
-                                  Icons.lock_open_rounded,
-                                  size: 18,
-                                ),
-                                label: const Text(
-                                  'Gunakan Kata Sandi',
-                                  style: TextStyle(fontWeight: FontWeight.w700),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  backgroundColor: const Color(0x80FFFFFF),
-                                  side: BorderSide(
-                                    color: _showGantiPassword
-                                        ? _teal
-                                        : _teal.withValues(alpha: 0.2),
-                                    width: _showGantiPassword ? 1.4 : 1,
-                                  ),
+                            const SizedBox(width: 9),
+                            Flexible(
+                              child: Text(
+                                _error!,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Color(0xFFB91C1C),
+                                  fontSize: 12.5,
                                 ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      TextButton(
-                        onPressed: () =>
-                            context.read<AuthService>().switchAccount(),
-                        child: Text(
-                          nama != null
-                              ? 'Bukan $nama? Gunakan akun lain'
-                              : 'Gunakan akun lain',
-                          style: const TextStyle(
-                            color: Color(0xFF667085),
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
+                    ],
+                    const SizedBox(height: 28),
+                    SizedBox(
+                      height: 52,
+                      child: FilledButton.icon(
+                        onPressed: _checking ? null : _unlock,
+                        icon: const Icon(Icons.fingerprint_rounded, size: 22),
+                        label: const Text(
+                          'Coba Lagi',
+                          style: TextStyle(
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
-                      const Spacer(),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 52,
+                      child: OutlinedButton.icon(
+                        onPressed: () => context.read<AuthService>().logout(),
+                        icon: const Icon(Icons.lock_outline_rounded, size: 20),
+                        label: Text(
+                          _showPasswordFallback
+                              ? 'Gunakan Kata Sandi'
+                              : 'Masuk dengan Kata Sandi',
+                          style: const TextStyle(
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    TextButton(
+                      onPressed: () =>
+                          context.read<AuthService>().switchAccount(),
+                      child: Text.rich(
+                        TextSpan(
+                          style: const TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 12.5,
+                          ),
+                          children: [
+                            if (nama != null) TextSpan(text: 'Bukan $nama?  '),
+                            const TextSpan(
+                              text: 'Gunakan akun lain',
+                              style: TextStyle(
+                                color: _teal,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );

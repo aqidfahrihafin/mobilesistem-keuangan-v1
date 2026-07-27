@@ -8,6 +8,7 @@ import '../models/anak.dart';
 import '../models/tagihan.dart';
 import '../providers/anak_provider.dart';
 import '../providers/tab_index_provider.dart';
+import 'tagihan_detail_screen.dart';
 import '../services/wali_api.dart';
 import '../utils/formatters.dart';
 import '../utils/jatuh_tempo.dart';
@@ -234,6 +235,16 @@ class _TagihanListState extends State<_TagihanList> {
   Future<void> _cetak(Tagihan tagihan) =>
       cetakTagihanFlow(context, widget.anak, tagihan);
 
+  Future<void> _bukaDetail(Tagihan tagihan) async {
+    final berubah = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) =>
+            TagihanDetailScreen(anak: widget.anak, tagihan: tagihan),
+      ),
+    );
+    if (berubah == true && mounted) setState(_load);
+  }
+
   void _toggleSelectionMode() {
     setState(() {
       _selectionMode = !_selectionMode;
@@ -377,10 +388,10 @@ class _TagihanListState extends State<_TagihanList> {
                   children: [
                     Expanded(
                       child: ListView.separated(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
                         itemCount: items.length,
                         separatorBuilder: (context, index) =>
-                            const SizedBox(height: 10),
+                            const Divider(height: 1, indent: 68, endIndent: 16),
                         itemBuilder: (context, index) {
                           final tagihan = items[index];
                           final payable = !tagihan.selesai;
@@ -390,6 +401,7 @@ class _TagihanListState extends State<_TagihanList> {
                             tagihan: tagihan,
                             onBayar: () => _bayar(tagihan),
                             onCetak: () => _cetak(tagihan),
+                            onOpen: () => _bukaDetail(tagihan),
                             selectionMode: _selectionMode,
                             selected: _selectedIds.contains(tagihan.id),
                             onToggleSelected: (_selectionMode && payable)
@@ -424,6 +436,7 @@ class _TagihanCard extends StatefulWidget {
   final Tagihan tagihan;
   final VoidCallback onBayar;
   final VoidCallback onCetak;
+  final VoidCallback onOpen;
 
   /// Multi-select bulk-payment mode - see _TagihanListState. [onToggleSelected]
   /// is null for a tagihan that can't be paid (lunas/dibatalkan) even while
@@ -438,6 +451,7 @@ class _TagihanCard extends StatefulWidget {
     required this.tagihan,
     required this.onBayar,
     required this.onCetak,
+    required this.onOpen,
     this.selectionMode = false,
     this.selected = false,
     this.onToggleSelected,
@@ -448,7 +462,7 @@ class _TagihanCard extends StatefulWidget {
 }
 
 class _TagihanCardState extends State<_TagihanCard> {
-  bool _expanded = false;
+  final bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -464,6 +478,7 @@ class _TagihanCardState extends State<_TagihanCard> {
 
     return FlatCard(
       padding: EdgeInsets.zero,
+      listItem: true,
       // Teal border/tint when this specific card is selected - the only
       // visual cue besides the checkbox itself that it'll be part of the
       // bulk payment.
@@ -471,10 +486,8 @@ class _TagihanCardState extends State<_TagihanCard> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: widget.selectionMode
-              ? widget.onToggleSelected
-              : () => setState(() => _expanded = !_expanded),
+          borderRadius: BorderRadius.circular(10),
+          onTap: widget.selectionMode ? widget.onToggleSelected : widget.onOpen,
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -535,6 +548,19 @@ class _TagihanCardState extends State<_TagihanCard> {
                               fontSize: 12.5,
                             ),
                           ),
+                          const SizedBox(height: 6),
+                          Text(
+                            formatRupiah(
+                              tagihan.selesai ? tagihan.nominal : tagihan.sisa,
+                            ),
+                            style: TextStyle(
+                              color: tagihan.selesai
+                                  ? Colors.grey[700]
+                                  : const Color(0xFF0F172A),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
                           if (jatuhTempoInfo != null ||
                               (tagihan.bisaDicicil && !tagihan.selesai)) ...[
                             const SizedBox(height: 5),
@@ -550,7 +576,7 @@ class _TagihanCardState extends State<_TagihanCard> {
                                     ),
                                     decoration: BoxDecoration(
                                       color: jatuhTempoInfo.background,
-                                      borderRadius: BorderRadius.circular(6),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
@@ -584,7 +610,7 @@ class _TagihanCardState extends State<_TagihanCard> {
                                     ),
                                     decoration: BoxDecoration(
                                       color: _teal.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(6),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
@@ -614,20 +640,13 @@ class _TagihanCardState extends State<_TagihanCard> {
                     ),
                     StatusBadge(status: tagihan.status),
                     const SizedBox(width: 4),
-                    AnimatedRotation(
-                      turns: _expanded ? 0.5 : 0,
-                      duration: const Duration(milliseconds: 200),
-                      child: Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: Colors.grey[500],
-                      ),
-                    ),
+                    Icon(Icons.chevron_right_rounded, color: Colors.grey[400]),
                   ],
                 ),
                 if (tagihan.status == 'sebagian') ...[
                   const SizedBox(height: 14),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(10),
                     child: LinearProgressIndicator(
                       value: progress,
                       minHeight: 6,
@@ -772,13 +791,13 @@ class _BayarSekaligusToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
         height: 34,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
           color: active ? _teal : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: active ? _teal : const Color(0xFFD8DBE2)),
         ),
         child: Row(
@@ -870,7 +889,7 @@ class _BulkSelectionBar extends StatelessWidget {
                   vertical: 14,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
               onPressed: onBayar,

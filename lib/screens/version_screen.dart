@@ -26,7 +26,7 @@ class VersionScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: const Color(0xFFE9EBEF)),
                 ),
                 child: Row(
@@ -147,7 +147,7 @@ class _ChangelogTile extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: const Color(0xFFE9EBEF)),
                 ),
                 child: Column(
@@ -162,7 +162,7 @@ class _ChangelogTile extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: _teal.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
                             'v${entry.version}',
@@ -190,7 +190,7 @@ class _ChangelogTile extends StatelessWidget {
                             ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFDCFCE7),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Text(
                               'Terbaru',

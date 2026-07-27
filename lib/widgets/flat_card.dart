@@ -7,6 +7,7 @@ class FlatCard extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final Color? color;
   final VoidCallback? onTap;
+  final bool listItem;
 
   const FlatCard({
     super.key,
@@ -14,24 +15,29 @@ class FlatCard extends StatelessWidget {
     this.padding = const EdgeInsets.all(16),
     this.color,
     this.onTap,
+    this.listItem = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(18);
+    final radius = BorderRadius.circular(10);
     final content = Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: color ?? const Color(0xEAF1F8F6),
-        borderRadius: radius,
-        border: Border.all(color: const Color(0x80A9CEC8), width: 1.1),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x180F3D3A),
-            blurRadius: 18,
-            offset: Offset(0, 7),
-          ),
-        ],
+        color: color ?? (listItem ? Colors.white : const Color(0xEAF1F8F6)),
+        borderRadius: listItem ? BorderRadius.zero : radius,
+        border: listItem
+            ? null
+            : Border.all(color: const Color(0x80A9CEC8), width: 1.1),
+        boxShadow: listItem
+            ? null
+            : const [
+                BoxShadow(
+                  color: Color(0x180F3D3A),
+                  blurRadius: 18,
+                  offset: Offset(0, 7),
+                ),
+              ],
       ),
       child: child,
     );
@@ -40,8 +46,12 @@ class FlatCard extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
-      borderRadius: radius,
-      child: InkWell(borderRadius: radius, onTap: onTap, child: content),
+      borderRadius: listItem ? BorderRadius.zero : radius,
+      child: InkWell(
+        borderRadius: listItem ? BorderRadius.zero : radius,
+        onTap: onTap,
+        child: content,
+      ),
     );
   }
 }

@@ -89,7 +89,7 @@ class AboutScreen extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: _teal.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         version != null ? 'Versi $version' : 'Memuat versi...',
@@ -144,7 +144,7 @@ class AboutScreen extends StatelessWidget {
                   (f) => Container(
                     decoration: BoxDecoration(
                       color: const Color(0xDDF1F8F6),
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: const Color(0x80A9CEC8)),
                       boxShadow: const [
                         BoxShadow(
@@ -190,14 +190,14 @@ class AboutScreen extends StatelessWidget {
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               color: const Color(0xFF0F172A),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Stack(
               clipBehavior: Clip.none,
               children: [
                 const Positioned.fill(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.all(Radius.circular(18)),
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
                     child: GeometricPatternBackground(opacity: 0.06),
                   ),
                 ),

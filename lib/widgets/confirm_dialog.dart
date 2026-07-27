@@ -65,7 +65,7 @@ class ConfirmDialog extends StatelessWidget {
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 28),
       child: GlassModalSurface(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(10),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 26, 24, 18),
           child: Column(
@@ -114,7 +114,7 @@ class ConfirmDialog extends StatelessWidget {
                           foregroundColor: Colors.grey[700],
                           side: const BorderSide(color: Color(0xFFD8DBE2)),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(13),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                         onPressed: () => Navigator.of(context).pop(false),
@@ -134,7 +134,7 @@ class ConfirmDialog extends StatelessWidget {
                           backgroundColor: confirmColor,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(13),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                         onPressed: () => Navigator.of(context).pop(true),

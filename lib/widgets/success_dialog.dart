@@ -85,7 +85,7 @@ class _SuccessDialogState extends State<_SuccessDialog> {
       child: Dialog(
         backgroundColor: Colors.transparent,
         child: GlassModalSurface(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(10),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(26, 32, 26, 24),
             child: Column(
@@ -138,7 +138,7 @@ class _SuccessDialogState extends State<_SuccessDialog> {
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF7F8FA),
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Column(
                       children: [
@@ -180,7 +180,7 @@ class _SuccessDialogState extends State<_SuccessDialog> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
                     onPressed: _syncing

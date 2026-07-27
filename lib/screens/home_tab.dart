@@ -460,7 +460,7 @@ class _SectionHeader extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         InkWell(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
           onTap: onLihatSemua,
           child: const Padding(
             padding: EdgeInsets.symmetric(vertical: 4, horizontal: 2),
@@ -552,7 +552,7 @@ class _HomeHeader extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         InkWell(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(10),
           onTap: () => context.read<TabIndexProvider>().go(3),
           child: CircleAvatar(
             radius: 19,
@@ -579,7 +579,7 @@ class _NotifBell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(10),
       onTap: () => context.read<TabIndexProvider>().go(1),
       child: SizedBox(
         width: 40,
@@ -628,7 +628,7 @@ class _BalanceCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
             color: _teal.withValues(alpha: 0.25),
@@ -739,7 +739,7 @@ class _BalanceCard extends StatelessWidget {
                     final bisaGanti = provider.anakList.length > 1;
 
                     return InkWell(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(10),
                       onTap: bisaGanti
                           ? () => openAnakPicker(context, provider)
                           : null,
@@ -747,7 +747,7 @@ class _BalanceCard extends StatelessWidget {
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
                           children: [
@@ -792,7 +792,7 @@ class _BalanceCard extends StatelessWidget {
                                 ),
                                 decoration: BoxDecoration(
                                   color: Colors.white.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(20),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -860,12 +860,12 @@ class _StatTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(10),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
           decoration: BoxDecoration(
             color: const Color(0xDCF4F9F8),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(color: const Color(0xCCFFFFFF)),
             boxShadow: const [
               BoxShadow(
@@ -903,7 +903,7 @@ class _StatTile extends StatelessWidget {
                         constraints: const BoxConstraints(minWidth: 16),
                         decoration: BoxDecoration(
                           color: const Color(0xFFB91C1C),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: Colors.white, width: 1.5),
                         ),
                         child: Text(
@@ -1050,7 +1050,7 @@ class _QuickActionButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
           // Fixed width (matching the icon box) rather than letting the
@@ -1069,7 +1069,7 @@ class _QuickActionButton extends StatelessWidget {
                   height: size,
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.11),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: color.withValues(alpha: 0.08)),
                   ),
                   alignment: Alignment.center,

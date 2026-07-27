@@ -104,7 +104,7 @@ class _BannerPeekCarouselState extends State<_BannerPeekCarousel> {
                 height: 6,
                 decoration: BoxDecoration(
                   color: i == _page ? _teal : const Color(0xFFD8DBE2),
-                  borderRadius: BorderRadius.circular(3),
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
           ],
@@ -123,18 +123,17 @@ class _BannerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: const Color(0xFFF1F2F4),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(10),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: banner.linkUrl == null
-            ? null
-            : () => _openLink(banner.linkUrl!),
+        onTap: banner.linkUrl == null ? null : () => _openLink(banner.linkUrl!),
         child: SizedBox(
           height: _bannerHeight,
           width: double.infinity,
           child: Image.network(
             banner.gambarUrl,
             fit: BoxFit.cover,
+            cacheHeight: 300,
             loadingBuilder: (context, child, progress) =>
                 progress == null ? child : const SizedBox.shrink(),
             errorBuilder: (context, error, stackTrace) =>

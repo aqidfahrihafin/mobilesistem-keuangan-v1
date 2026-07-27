@@ -58,7 +58,7 @@ class _QrScannerFrameState extends State<QrScannerFrame>
                 child: Container(
                   height: 2,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(10),
                     gradient: LinearGradient(
                       colors: [
                         _teal.withValues(alpha: 0),

@@ -109,7 +109,7 @@ class _TagihanDetailScreenState extends State<TagihanDetailScreen> {
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: const Color(0xFFE9EBEF)),
                   ),
                   child: Column(
@@ -184,7 +184,7 @@ class _TagihanDetailScreenState extends State<TagihanDetailScreen> {
                       if (tagihan.status == 'sebagian') ...[
                         const SizedBox(height: 14),
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(10),
                           child: LinearProgressIndicator(
                             value: progress,
                             minHeight: 6,
@@ -211,7 +211,7 @@ class _TagihanDetailScreenState extends State<TagihanDetailScreen> {
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: const Color(0xFFE9EBEF)),
                   ),
                   child: Column(
@@ -338,7 +338,7 @@ class _Chip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

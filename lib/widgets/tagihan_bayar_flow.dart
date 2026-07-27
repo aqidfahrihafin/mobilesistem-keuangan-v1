@@ -119,7 +119,7 @@ Future<bool> _bayarTagihanFlowUnlocked(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: _bg,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Column(
             children: [
@@ -378,7 +378,7 @@ class _BayarSaldoSheetState extends State<_BayarSaldoSheet> {
                 height: 4,
                 decoration: BoxDecoration(
                   color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
               const SizedBox(height: 22),
@@ -431,7 +431,7 @@ class _BayarSaldoSheetState extends State<_BayarSaldoSheet> {
                     filled: true,
                     fillColor: _bg,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide.none,
                     ),
                   ),
@@ -453,7 +453,7 @@ class _BayarSaldoSheetState extends State<_BayarSaldoSheet> {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: _bg,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Column(
                   children: [
@@ -515,7 +515,7 @@ class _BayarSaldoSheetState extends State<_BayarSaldoSheet> {
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   onPressed: saldoBisaDipakai
@@ -552,7 +552,7 @@ class _BayarSaldoSheetState extends State<_BayarSaldoSheet> {
                     side: const BorderSide(color: Color(0xFFD8DBE2)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   onPressed: () => Navigator.of(

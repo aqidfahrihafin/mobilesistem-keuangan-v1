@@ -18,7 +18,6 @@ import 'pin_setup_screen.dart';
 
 const _bg = Color(0xFFF3F8F7);
 const _teal = Color(0xFF0F766E);
-const _gold = Color(0xFFB88A2E);
 
 /// Moves saldo directly between two santri who share the same Kartu
 /// Keluarga (KK) - "dari" is whichever anak is currently selected app-wide
@@ -230,7 +229,7 @@ class _TransferFormState extends State<_TransferForm> {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: _bg,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
           children: [
@@ -383,23 +382,56 @@ class _TransferFormState extends State<_TransferForm> {
               // back to back.
               if (!diBawahMinimum) ...[
                 Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.fromLTRB(0, 0, 14, 0),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFEF6E7),
-                    borderRadius: BorderRadius.circular(14),
+                    color: const Color(0xFFF4F8F7),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFDCE9E7)),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.info_outline, color: _gold, size: 18),
-                      const SizedBox(width: 10),
+                      Container(
+                        width: 44,
+                        constraints: const BoxConstraints(minHeight: 78),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFE3F1EF),
+                          borderRadius: BorderRadius.horizontal(
+                            left: Radius.circular(10),
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.shield_outlined,
+                          color: _teal,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
                       Expanded(
-                        child: Text(
-                          'Transfer hanya bisa dilakukan antar santri dalam satu Kartu Keluarga, dan tidak boleh membuat saldo pengirim di bawah batas minimum.',
-                          style: TextStyle(
-                            color: Colors.amber[900],
-                            fontSize: 12.5,
-                            height: 1.4,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'Transfer keluarga',
+                                style: TextStyle(
+                                  color: Color(0xFF0F172A),
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              SizedBox(height: 3),
+                              Text(
+                                'Hanya untuk santri dalam satu Kartu Keluarga dan saldo harus tetap di atas batas minimum.',
+                                style: TextStyle(
+                                  color: Color(0xFF64748B),
+                                  fontSize: 11.5,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -434,7 +466,7 @@ class _TransferFormState extends State<_TransferForm> {
               ),
               InkWell(
                 onTap: diBawahMinimum ? null : () => _pilihPenerima(saudara),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(10),
                 child: _ke == null
                     ? Container(
                         padding: const EdgeInsets.all(14),
@@ -442,7 +474,7 @@ class _TransferFormState extends State<_TransferForm> {
                           color: diBawahMinimum
                               ? const Color(0xBFE8EEED)
                               : const Color(0xDDF1F8F6),
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: diBawahMinimum
                                 ? const Color(0x6694A3A0)
@@ -589,7 +621,7 @@ class _AnakRow extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xDDF1F8F6),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0x80A9CEC8)),
         boxShadow: const [
           BoxShadow(
