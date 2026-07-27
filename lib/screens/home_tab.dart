@@ -380,7 +380,7 @@ class _AnakDashboardState extends State<_AnakDashboard> {
 
                         if (items.isEmpty) {
                           return FlatCard(
-                            color: const Color(0xE6F4F9F8),
+                            color: const Color(0xD9FFFFFF),
                             child: const EmptyStateView(
                               icon: Icons.swap_horiz_rounded,
                               message: 'Belum ada transaksi.',
@@ -390,7 +390,7 @@ class _AnakDashboardState extends State<_AnakDashboard> {
                         }
 
                         return FlatCard(
-                          color: const Color(0xE6F4F9F8),
+                          color: const Color(0xD9FFFFFF),
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           child: Column(
                             children: [
@@ -963,7 +963,7 @@ class _QuickActionsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FlatCard(
-      color: const Color(0xDCF4F9F8),
+      color: const Color(0xD9FFFFFF),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: LayoutBuilder(
         builder: (context, constraints) {

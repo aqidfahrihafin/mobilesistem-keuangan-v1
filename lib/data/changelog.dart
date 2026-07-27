@@ -15,6 +15,16 @@ class ChangelogEntry {
 /// backend changelog endpoint, this list is the source of truth.
 const changelog = <ChangelogEntry>[
   ChangelogEntry(
+    version: '1.1.1',
+    date: 'Juli 2026',
+    changes: [
+      'Penyempurnaan border dan jarak form pada halaman login.',
+      'Penyelarasan tampilan kartu Beranda, Profil, Tagihan, Detail Tagihan, dan Laporan.',
+      'Detail tagihan lunas kini menampilkan informasi pembayaran yang lebih lengkap.',
+      'Unduhan QRIS kini berisi QR, nominal, status, masa berlaku, dan ID pembayaran.',
+    ],
+  ),
+  ChangelogEntry(
     version: '1.1.0',
     date: 'Juli 2026',
     changes: [

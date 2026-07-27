@@ -69,7 +69,7 @@ class _BiometricUnlockScreenState extends State<BiometricUnlockScreen> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(28, 28, 28, 22),
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   minHeight: constraints.maxHeight - 50,
@@ -78,61 +78,42 @@ class _BiometricUnlockScreenState extends State<BiometricUnlockScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const AuthBrandHeader(),
-                    const SizedBox(height: 54),
-                    Text.rich(
-                      TextSpan(
-                        style: const TextStyle(
-                          color: Color(0xFF0F172A),
-                          fontSize: 24,
-                          height: 1.2,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                        ),
-                        children: [
-                          const TextSpan(text: 'Selamat datang kembali'),
-                          if (nama != null) ...[
-                            const TextSpan(text: ',\n'),
-                            TextSpan(
-                              text: nama,
-                              style: const TextStyle(color: _teal),
-                            ),
-                          ],
-                        ],
+                    const SizedBox(height: 48),
+                    Text(
+                      nama == null ? 'Buka aplikasi' : 'Halo, $nama',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Color(0xFF0F172A),
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 6),
                     const Text(
-                      'Verifikasi sidik jari untuk membuka akun Anda.',
-                      style: TextStyle(
-                        color: Color(0xFF64748B),
-                        fontSize: 14,
-                        height: 1.45,
-                      ),
+                      'Konfirmasi sidik jari untuk melanjutkan.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
                     ),
-                    const SizedBox(height: 42),
+                    const SizedBox(height: 36),
                     Center(
                       child: GestureDetector(
                         onTap: _checking ? null : _unlock,
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 220),
-                          width: 132,
-                          height: 132,
+                          width: 116,
+                          height: 116,
                           decoration: BoxDecoration(
                             color: const Color(0xFFE8F5F3),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: _teal.withValues(
-                                alpha: _checking ? 0.5 : 0.18,
-                              ),
-                            ),
+                            shape: BoxShape.circle,
                           ),
                           alignment: Alignment.center,
                           child: Container(
-                            width: 88,
-                            height: 88,
+                            width: 78,
+                            height: 78,
                             decoration: BoxDecoration(
                               color: _teal,
-                              borderRadius: BorderRadius.circular(10),
+                              shape: BoxShape.circle,
                             ),
                             alignment: Alignment.center,
                             child: _checking
@@ -147,7 +128,7 @@ class _BiometricUnlockScreenState extends State<BiometricUnlockScreen> {
                                 : const Icon(
                                     Icons.fingerprint_rounded,
                                     color: Colors.white,
-                                    size: 50,
+                                    size: 44,
                                   ),
                           ),
                         ),
@@ -161,15 +142,6 @@ class _BiometricUnlockScreenState extends State<BiometricUnlockScreen> {
                         color: Color(0xFF0F172A),
                         fontSize: 15.5,
                         fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    const Text(
-                      'Gunakan sidik jari yang terdaftar',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFF64748B),
-                        fontSize: 12.5,
                       ),
                     ),
                     if (_error != null) ...[
@@ -204,14 +176,14 @@ class _BiometricUnlockScreenState extends State<BiometricUnlockScreen> {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 24),
                     SizedBox(
                       height: 52,
                       child: FilledButton.icon(
                         onPressed: _checking ? null : _unlock,
                         icon: const Icon(Icons.fingerprint_rounded, size: 22),
                         label: const Text(
-                          'Coba Lagi',
+                          'Verifikasi Sidik Jari',
                           style: TextStyle(
                             fontSize: 15.5,
                             fontWeight: FontWeight.w700,
@@ -236,7 +208,7 @@ class _BiometricUnlockScreenState extends State<BiometricUnlockScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                     TextButton(
                       onPressed: () =>
                           context.read<AuthService>().switchAccount(),

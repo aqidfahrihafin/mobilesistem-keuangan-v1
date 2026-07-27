@@ -199,7 +199,7 @@ class ProfilTab extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: FlatCard(
-              color: const Color(0xDDF1F8F6),
+              color: const Color(0xD9FFFFFF),
               padding: EdgeInsets.zero,
               child: Column(
                 children: [
@@ -255,7 +255,7 @@ class ProfilTab extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: FlatCard(
-              color: const Color(0xDDF1F8F6),
+              color: const Color(0xD9FFFFFF),
               padding: EdgeInsets.zero,
               child: Column(
                 children: [
@@ -290,7 +290,7 @@ class ProfilTab extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: FlatCard(
-              color: const Color(0xDDF1F8F6),
+              color: const Color(0xD9FFFFFF),
               padding: EdgeInsets.zero,
               child: _MenuTile(
                 icon: Icons.logout,

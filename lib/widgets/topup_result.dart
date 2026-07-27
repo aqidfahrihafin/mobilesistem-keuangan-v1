@@ -1,6 +1,8 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:gal/gal.dart';
-import 'package:http/http.dart' as http;
 
 import '../models/topup.dart';
 import '../utils/formatters.dart';
@@ -356,6 +358,7 @@ class QrisCard extends StatefulWidget {
 
 class _QrisCardState extends State<QrisCard> {
   bool _saving = false;
+  final _captureKey = GlobalKey();
 
   Future<void> _saveQr() async {
     final qrUrl = widget.topup.qrUrl;
@@ -379,11 +382,17 @@ class _QrisCardState extends State<QrisCard> {
         return;
       }
 
-      final response = await http.get(Uri.parse(qrUrl));
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw Exception('QRIS tidak dapat diunduh.');
-      }
-      await Gal.putImageBytes(response.bodyBytes);
+      if (!mounted) return;
+      await precacheImage(NetworkImage(qrUrl), context);
+      await WidgetsBinding.instance.endOfFrame;
+      final boundary =
+          _captureKey.currentContext?.findRenderObject()
+              as RenderRepaintBoundary?;
+      if (boundary == null) throw Exception('Tampilan QRIS belum siap.');
+      final image = await boundary.toImage(pixelRatio: 3);
+      final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (bytes == null) throw Exception('Gambar QRIS gagal dibuat.');
+      await Gal.putImageBytes(bytes.buffer.asUint8List());
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -425,75 +434,17 @@ class _QrisCardState extends State<QrisCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: _teal.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: const Icon(
-                  Icons.qr_code_rounded,
-                  color: _teal,
-                  size: 18,
-                ),
+          RepaintBoundary(
+            key: _captureKey,
+            child: ColoredBox(
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: _QrisDownloadContent(topup: topup),
               ),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Text(
-                  'QRIS',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5),
-                ),
-              ),
-              StatusPill(status: topup.status),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Center(
-            child: Container(
-              width: 220,
-              height: 220,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: _bg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: topup.qrUrl == null
-                  ? const Center(child: Icon(Icons.qr_code_2, size: 64))
-                  : Image.network(
-                      topup.qrUrl!,
-                      fit: BoxFit.contain,
-                      loadingBuilder: (context, child, progress) {
-                        if (progress == null) return child;
-                        return const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        );
-                      },
-                      errorBuilder: (context, error, stack) => Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            color: Colors.grey[500],
-                            size: 32,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Gagal memuat QR',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
             ),
           ),
-          const SizedBox(height: 16),
+          if (topup.qrUrl != null) const SizedBox(height: 14),
           if (topup.qrUrl != null) ...[
             SizedBox(
               height: 48,
@@ -515,18 +466,91 @@ class _QrisCardState extends State<QrisCard> {
                 ),
               ),
             ),
-            const SizedBox(height: 14),
-          ],
-          JumlahBayarRow(
-            nominal: topup.nominalDiminta,
-            biaya: topup.biayaDitanggungWali ? topup.biayaMidtrans : null,
-          ),
-          if (topup.expiryTime != null) ...[
-            const SizedBox(height: 10),
-            ExpiryRow(expiryTime: topup.expiryTime!),
           ],
         ],
       ),
+    );
+  }
+}
+
+class _QrisDownloadContent extends StatelessWidget {
+  final Topup topup;
+
+  const _QrisDownloadContent({required this.topup});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: _teal.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: const Icon(Icons.qr_code_rounded, color: _teal, size: 18),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'Pembayaran QRIS',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5),
+              ),
+            ),
+            StatusPill(status: topup.status),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Center(
+          child: Container(
+            width: 220,
+            height: 220,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: _bg,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: topup.qrUrl == null
+                ? const Center(child: Icon(Icons.qr_code_2, size: 64))
+                : Image.network(
+                    topup.qrUrl!,
+                    fit: BoxFit.contain,
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      );
+                    },
+                    errorBuilder: (context, error, stack) => const Center(
+                      child: Text(
+                        'Gagal memuat QR',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        JumlahBayarRow(
+          nominal: topup.nominalDiminta,
+          biaya: topup.biayaDitanggungWali ? topup.biayaMidtrans : null,
+        ),
+        if (topup.expiryTime != null) ...[
+          const SizedBox(height: 10),
+          ExpiryRow(expiryTime: topup.expiryTime!),
+        ],
+        const SizedBox(height: 10),
+        Text(
+          'ID Pembayaran: ${topup.uuid}',
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+        ),
+      ],
     );
   }
 }

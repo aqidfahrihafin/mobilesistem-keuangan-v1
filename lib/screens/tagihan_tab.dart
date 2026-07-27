@@ -11,16 +11,13 @@ import '../providers/tab_index_provider.dart';
 import 'tagihan_detail_screen.dart';
 import '../services/wali_api.dart';
 import '../utils/formatters.dart';
-import '../utils/jatuh_tempo.dart';
 import '../widgets/active_filter_bar.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/error_state_view.dart';
 import '../widgets/filter_sheet_scaffold.dart';
-import '../widgets/flat_card.dart';
 import '../widgets/skeleton.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/tagihan_bayar_bulk_flow.dart';
-import '../widgets/tagihan_bayar_flow.dart';
 
 const _bg = Colors.transparent;
 const _teal = Color(0xFF0F766E);
@@ -223,18 +220,6 @@ class _TagihanListState extends State<_TagihanList> {
     super.dispose();
   }
 
-  /// Delegates to the shared [bayarTagihanFlow] (also used by
-  /// TagihanDetailScreen) so both entry points run the exact same
-  /// PIN-gated payment logic - this method just owns the local list
-  /// refresh afterward.
-  Future<void> _bayar(Tagihan tagihan) async {
-    final berhasil = await bayarTagihanFlow(context, widget.anak, tagihan);
-    if (berhasil && mounted) setState(_load);
-  }
-
-  Future<void> _cetak(Tagihan tagihan) =>
-      cetakTagihanFlow(context, widget.anak, tagihan);
-
   Future<void> _bukaDetail(Tagihan tagihan) async {
     final berubah = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
@@ -399,8 +384,6 @@ class _TagihanListState extends State<_TagihanList> {
                           return _TagihanCard(
                             key: ValueKey(tagihan.id),
                             tagihan: tagihan,
-                            onBayar: () => _bayar(tagihan),
-                            onCetak: () => _cetak(tagihan),
                             onOpen: () => _bukaDetail(tagihan),
                             selectionMode: _selectionMode,
                             selected: _selectedIds.contains(tagihan.id),
@@ -434,8 +417,6 @@ class _TagihanListState extends State<_TagihanList> {
 /// its full numeric detail (and both action buttons) up front.
 class _TagihanCard extends StatefulWidget {
   final Tagihan tagihan;
-  final VoidCallback onBayar;
-  final VoidCallback onCetak;
   final VoidCallback onOpen;
 
   /// Multi-select bulk-payment mode - see _TagihanListState. [onToggleSelected]
@@ -449,8 +430,6 @@ class _TagihanCard extends StatefulWidget {
   const _TagihanCard({
     super.key,
     required this.tagihan,
-    required this.onBayar,
-    required this.onCetak,
     required this.onOpen,
     this.selectionMode = false,
     this.selected = false,
@@ -462,314 +441,115 @@ class _TagihanCard extends StatefulWidget {
 }
 
 class _TagihanCardState extends State<_TagihanCard> {
-  final bool _expanded = false;
-
   @override
   Widget build(BuildContext context) {
     final tagihan = widget.tagihan;
     final (badgeBg, badgeFg) = StatusBadge.colorsFor(tagihan.status);
-    final progress = tagihan.nominal > 0
-        ? (tagihan.nominalTerbayar / tagihan.nominal).clamp(0.0, 1.0)
-        : 0.0;
-    final showActions = !tagihan.selesai || tagihan.nominalTerbayar > 0;
-    final jatuhTempoInfo = hitungJatuhTempo(tagihan);
-
     final canSelect = widget.onToggleSelected != null;
 
-    return FlatCard(
-      padding: EdgeInsets.zero,
-      listItem: true,
-      // Teal border/tint when this specific card is selected - the only
-      // visual cue besides the checkbox itself that it'll be part of the
-      // bulk payment.
-      color: widget.selected ? _teal.withValues(alpha: 0.04) : null,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10),
-          onTap: widget.selectionMode ? widget.onToggleSelected : widget.onOpen,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+    return Material(
+      color: widget.selected
+          ? _teal.withValues(alpha: 0.06)
+          : Colors.transparent,
+      child: InkWell(
+        onTap: widget.selectionMode ? widget.onToggleSelected : widget.onOpen,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 16),
+          child: Row(
+            children: [
+              if (widget.selectionMode)
+                SizedBox(
+                  width: 38,
+                  height: 38,
+                  child: Center(
+                    child: canSelect
+                        ? Checkbox(
+                            value: widget.selected,
+                            activeColor: _teal,
+                            onChanged: (_) => widget.onToggleSelected!(),
+                          )
+                        : Icon(
+                            Icons.lock_outline_rounded,
+                            size: 18,
+                            color: Colors.grey[300],
+                          ),
+                  ),
+                )
+              else
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: badgeBg,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.receipt_long_rounded,
+                    color: badgeFg,
+                    size: 17,
+                  ),
+                ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (widget.selectionMode) ...[
-                      SizedBox(
-                        width: 42,
-                        height: 42,
-                        child: Center(
-                          child: canSelect
-                              ? Checkbox(
-                                  value: widget.selected,
-                                  activeColor: _teal,
-                                  onChanged: (_) => widget.onToggleSelected!(),
-                                )
-                              : Icon(
-                                  Icons.lock_outline_rounded,
-                                  size: 18,
-                                  color: Colors.grey[300],
-                                ),
-                        ),
-                      ),
-                    ] else
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: badgeBg,
-                          shape: BoxShape.circle,
-                        ),
-                        alignment: Alignment.center,
-                        child: Icon(
-                          Icons.receipt_long_rounded,
-                          color: badgeFg,
-                          size: 20,
-                        ),
-                      ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            tagihan.jenisTagihanNama,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14.5,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            tagihan.periodeLabel,
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 12.5,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            formatRupiah(
-                              tagihan.selesai ? tagihan.nominal : tagihan.sisa,
-                            ),
-                            style: TextStyle(
-                              color: tagihan.selesai
-                                  ? Colors.grey[700]
-                                  : const Color(0xFF0F172A),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          if (jatuhTempoInfo != null ||
-                              (tagihan.bisaDicicil && !tagihan.selesai)) ...[
-                            const SizedBox(height: 5),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 4,
-                              children: [
-                                if (jatuhTempoInfo != null)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 7,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: jatuhTempoInfo.background,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          jatuhTempoInfo.icon,
-                                          size: 11,
-                                          color: jatuhTempoInfo.color,
-                                        ),
-                                        const SizedBox(width: 3),
-                                        Text(
-                                          jatuhTempoInfo.label,
-                                          style: TextStyle(
-                                            fontSize: 10.5,
-                                            fontWeight: FontWeight.w700,
-                                            color: jatuhTempoInfo.color,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                // Lets a wali spot at a glance, without
-                                // expanding the card, which tagihan can be
-                                // paid in installments (JenisTagihan.bisa_
-                                // dicicil) versus which must be paid in full.
-                                if (tagihan.bisaDicicil && !tagihan.selesai)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 7,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: _teal.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: const [
-                                        Icon(
-                                          Icons.payments_outlined,
-                                          size: 11,
-                                          color: _teal,
-                                        ),
-                                        SizedBox(width: 3),
-                                        Text(
-                                          'Bisa Dicicil',
-                                          style: TextStyle(
-                                            fontSize: 10.5,
-                                            fontWeight: FontWeight.w700,
-                                            color: _teal,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ],
-                        ],
+                    Text(
+                      tagihan.jenisTagihanNama,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13.5,
                       ),
                     ),
-                    StatusBadge(status: tagihan.status),
-                    const SizedBox(width: 4),
-                    Icon(Icons.chevron_right_rounded, color: Colors.grey[400]),
+                    const SizedBox(height: 2),
+                    Text(
+                      tagihan.periodeLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Colors.grey[500], fontSize: 11.5),
+                    ),
                   ],
                 ),
-                if (tagihan.status == 'sebagian') ...[
-                  const SizedBox(height: 14),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 6,
-                      backgroundColor: const Color(0xFFEEF0F3),
-                      valueColor: const AlwaysStoppedAnimation(_teal),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    formatRupiah(
+                      tagihan.selesai ? tagihan.nominal : tagihan.sisa,
+                    ),
+                    style: TextStyle(
+                      color: tagihan.lunas
+                          ? const Color(0xFF15803D)
+                          : const Color(0xFFB91C1C),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 2),
                   Text(
-                    '${(progress * 100).round()}% terbayar',
+                    statusTagihanLabel[tagihan.status] ?? tagihan.status,
                     style: TextStyle(
-                      fontSize: 11.5,
-                      color: Colors.grey[600],
+                      color: badgeFg,
+                      fontSize: 10.5,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeInOut,
-                  alignment: Alignment.topCenter,
-                  child: !_expanded
-                      ? const SizedBox(width: double.infinity)
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 14),
-                            const Divider(height: 1, color: Color(0xFFEEF0F3)),
-                            const SizedBox(height: 12),
-                            if (tagihan.adaDiskon) ...[
-                              _KeyValueRow(
-                                label: 'Sebelum Diskon',
-                                value: formatRupiah(
-                                  tagihan.nominalSebelumDiskon!,
-                                ),
-                              ),
-                              _KeyValueRow(
-                                label: 'Diskon',
-                                value: '${tagihan.diskonPersen}%',
-                              ),
-                            ],
-                            _KeyValueRow(
-                              label: 'Nominal',
-                              value: formatRupiah(tagihan.nominal),
-                            ),
-                            _KeyValueRow(
-                              label: 'Terbayar',
-                              value: formatRupiah(tagihan.nominalTerbayar),
-                            ),
-                            if (!tagihan.selesai)
-                              _KeyValueRow(
-                                label: 'Sisa',
-                                value: formatRupiah(tagihan.sisa),
-                                bold: true,
-                              ),
-                            if (!tagihan.selesai &&
-                                tagihan.jatuhTempo != null) ...[
-                              const SizedBox(height: 6),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.event_outlined,
-                                    size: 13,
-                                    color: Colors.grey[500],
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Jatuh tempo ${formatTanggal(tagihan.jatuhTempo!)}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                            if (showActions) ...[
-                              const SizedBox(height: 14),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  if (tagihan.nominalTerbayar > 0)
-                                    IconButton.outlined(
-                                      onPressed: widget.onCetak,
-                                      icon: const Icon(
-                                        Icons.print_outlined,
-                                        size: 18,
-                                      ),
-                                      tooltip: 'Cetak Struk',
-                                      style: IconButton.styleFrom(
-                                        foregroundColor: _teal,
-                                        side: const BorderSide(
-                                          color: Color(0xFFD8DBE2),
-                                        ),
-                                      ),
-                                    ),
-                                  if (!tagihan.selesai &&
-                                      tagihan.nominalTerbayar > 0)
-                                    const SizedBox(width: 8),
-                                  if (!tagihan.selesai)
-                                    FilledButton.tonalIcon(
-                                      onPressed: widget.onBayar,
-                                      icon: const Icon(
-                                        Icons.wallet_outlined,
-                                        size: 17,
-                                      ),
-                                      label: const Text('Bayar'),
-                                      style: FilledButton.styleFrom(
-                                        backgroundColor: _teal.withValues(
-                                          alpha: 0.1,
-                                        ),
-                                        foregroundColor: _teal,
-                                        elevation: 0,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ],
-                          ],
-                        ),
+              ),
+              if (!widget.selectionMode) ...[
+                const SizedBox(width: 2),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 16,
+                  color: Colors.grey[400],
                 ),
               ],
-            ),
+            ],
           ),
         ),
       ),
@@ -897,44 +677,6 @@ class _BulkSelectionBar extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _KeyValueRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool bold;
-
-  const _KeyValueRow({
-    required this.label,
-    required this.value,
-    this.bold = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 2),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(color: Colors.grey[600], fontSize: 13),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            value,
-            textAlign: TextAlign.right,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ],
       ),
     );
   }

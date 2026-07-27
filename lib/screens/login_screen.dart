@@ -110,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(28, 28, 28, 22),
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   minHeight: constraints.maxHeight - 50,
@@ -121,23 +121,22 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const AuthBrandHeader(),
-                      const SizedBox(height: 54),
+                      const SizedBox(height: 42),
                       const Text(
-                        'Selamat datang kembali',
+                        'Selamat datang',
                         style: TextStyle(
                           color: Color(0xFF0F172A),
-                          fontSize: 24,
+                          fontSize: 26,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.5,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       const Text(
-                        'Masuk untuk mengelola saldo, tagihan, dan aktivitas santri dengan aman.',
+                        'Gunakan akun wali Anda.',
                         style: TextStyle(
                           color: Color(0xFF64748B),
                           fontSize: 14,
-                          height: 1.45,
                         ),
                       ),
                       const SizedBox(height: 30),
@@ -258,48 +257,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ],
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.shield_outlined,
-                            size: 17,
-                            color: Colors.grey[500],
-                          ),
-                          const SizedBox(width: 7),
-                          Text(
-                            'Login aman dan terenkripsi',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 12.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 34),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 13,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEFF8F7),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.info_outline_rounded, color: _teal),
-                            SizedBox(width: 9),
-                            Flexible(
-                              child: Text(
-                                'Belum punya akun? Hubungi pengurus pondok.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(color: _teal, fontSize: 12.5),
-                              ),
-                            ),
-                          ],
+                      const SizedBox(height: 18),
+                      Text(
+                        'Butuh bantuan? Hubungi pengurus pondok.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.grey[500],
+                          fontSize: 12.5,
                         ),
                       ),
                     ],

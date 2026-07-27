@@ -33,7 +33,7 @@ class ApiConfig {
 
   /// URL server produksi (hosting).
   static const String _prodUrl =
-      'https://emal-annuqayah.storytelling.my.id/api';
+      'https://emall.ecometer.my.id/api';
 
   /// Mengembalikan Base URL API sesuai kondisi aplikasi.
   static String get baseUrl {

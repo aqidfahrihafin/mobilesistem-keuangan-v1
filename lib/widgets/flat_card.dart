@@ -28,7 +28,7 @@ class FlatCard extends StatelessWidget {
         borderRadius: listItem ? BorderRadius.zero : radius,
         border: listItem
             ? null
-            : Border.all(color: const Color(0x80A9CEC8), width: 1.1),
+            : Border.all(color: const Color(0xE6FFFFFF), width: 1.1),
         boxShadow: listItem
             ? null
             : const [

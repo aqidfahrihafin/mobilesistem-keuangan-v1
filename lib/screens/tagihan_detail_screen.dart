@@ -202,6 +202,27 @@ class _TagihanDetailScreenState extends State<TagihanDetailScreen> {
                           ),
                         ),
                       ],
+                      const SizedBox(height: 18),
+                      const Divider(height: 1, color: Color(0xFFE9EBEF)),
+                      const SizedBox(height: 16),
+                      Text(
+                        tagihan.lunas ? 'Total Tagihan' : 'Sisa Tagihan',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        formatRupiah(
+                          tagihan.lunas ? tagihan.nominal : tagihan.sisa,
+                        ),
+                        style: TextStyle(
+                          color: tagihan.lunas
+                              ? const Color(0xFF15803D)
+                              : const Color(0xFF0F172A),
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -210,12 +231,20 @@ class _TagihanDetailScreenState extends State<TagihanDetailScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: const Color(0xD9FFFFFF),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: const Color(0xFFE9EBEF)),
                   ),
                   child: Column(
                     children: [
+                      _row('No. Tagihan', '#${tagihan.id}'),
+                      _divider(),
+                      _row('Nama Santri', widget.anak.nama),
+                      _divider(),
+                      _row('NIS', widget.anak.nis),
+                      _divider(),
+                      _row('Periode', tagihan.periodeLabel),
+                      _divider(),
                       if (tagihan.adaDiskon) ...[
                         _row(
                           'Sebelum Diskon',
@@ -228,10 +257,18 @@ class _TagihanDetailScreenState extends State<TagihanDetailScreen> {
                       _row('Nominal', formatRupiah(tagihan.nominal)),
                       _divider(),
                       _row('Terbayar', formatRupiah(tagihan.nominalTerbayar)),
-                      if (!tagihan.selesai) ...[
-                        _divider(),
-                        _row('Sisa', formatRupiah(tagihan.sisa), bold: true),
-                      ],
+                      _divider(),
+                      _row(
+                        'Sisa',
+                        formatRupiah(tagihan.sisa),
+                        bold: !tagihan.lunas,
+                      ),
+                      _divider(),
+                      _row(
+                        'Status',
+                        statusTagihanLabel[tagihan.status] ?? tagihan.status,
+                        bold: tagihan.lunas,
+                      ),
                       if (tagihan.jatuhTempo != null) ...[
                         _divider(),
                         _row('Jatuh Tempo', formatTanggal(tagihan.jatuhTempo!)),
@@ -253,8 +290,15 @@ class _TagihanDetailScreenState extends State<TagihanDetailScreen> {
                                 widget.anak,
                                 tagihan,
                               ),
-                              icon: const Icon(Icons.print_outlined, size: 18),
-                              label: const Text('Cetak Struk'),
+                              icon: const Icon(
+                                Icons.download_rounded,
+                                size: 18,
+                              ),
+                              label: Text(
+                                tagihan.lunas
+                                    ? 'Unduh Bukti Pembayaran'
+                                    : 'Unduh Struk',
+                              ),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: _teal,
                                 side: const BorderSide(
