@@ -21,13 +21,6 @@ class AuthBrandHeader extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: const Color(0xFFE2E8F0)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x120F172A),
-                blurRadius: 18,
-                offset: Offset(0, 6),
-              ),
-            ],
           ),
           child: const AppLogoImage(),
         ),

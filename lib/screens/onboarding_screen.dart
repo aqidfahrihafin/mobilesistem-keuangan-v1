@@ -98,9 +98,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     height: 42,
                     padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
-                      color: const Color(0xDCF4F9F8),
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xCCFFFFFF)),
+                      border: Border.all(color: const Color(0xFFE2E8E4)),
                     ),
                     child: const AppLogoImage(),
                   ),
@@ -220,13 +220,6 @@ class _SlideView extends StatelessWidget {
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _teal.withValues(alpha: 0.2),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
                 ),
                 alignment: Alignment.center,
                 child: Icon(slide.icon, color: Colors.white, size: 34),

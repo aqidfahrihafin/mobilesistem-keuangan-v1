@@ -51,13 +51,6 @@ class AboutScreen extends StatelessWidget {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _teal.withValues(alpha: 0.28),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
                   ),
                   padding: const EdgeInsets.all(20),
                   child: const AppLogoImage(),
@@ -107,7 +100,7 @@ class AboutScreen extends StatelessWidget {
           ),
           const SizedBox(height: 28),
           FlatCard(
-            color: const Color(0xDDF1F8F6),
+            color: Colors.white,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -143,16 +136,9 @@ class AboutScreen extends StatelessWidget {
                 .map(
                   (f) => Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xDDF1F8F6),
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0x80A9CEC8)),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x120F3D3A),
-                          blurRadius: 14,
-                          offset: Offset(0, 5),
-                        ),
-                      ],
+                      border: Border.all(color: const Color(0xFFE2E8E4)),
                     ),
                     padding: const EdgeInsets.all(10),
                     child: Column(

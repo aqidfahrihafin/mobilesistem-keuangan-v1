@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/anak_provider.dart';
 import '../providers/tab_index_provider.dart';
+import '../theme/app_theme.dart';
 import 'home_tab.dart';
 import 'laporan_tab.dart';
 import 'profil_tab.dart';
@@ -89,9 +90,9 @@ class _MainScreenState extends State<MainScreen> {
           child: FloatingActionButton(
             onPressed: _openTopup,
             tooltip: 'Top Up Saldo',
-            backgroundColor: _teal,
+            backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
-            elevation: 3,
+            elevation: 1,
             shape: const CircleBorder(),
             // FittedBox (not just a fixed 60x60 circle) - a CircleBorder
             // FAB actively clips its content, so a larger system font
@@ -124,10 +125,10 @@ class _MainScreenState extends State<MainScreen> {
         bottomNavigationBar: BottomAppBar(
           shape: const CircularNotchedRectangle(),
           notchMargin: 8,
-          color: const Color(0xE8FFFFFF),
+          color: AppColors.surface,
           surfaceTintColor: Colors.transparent,
-          shadowColor: const Color(0x260F3D3A),
-          elevation: 12,
+          shadowColor: Colors.transparent,
+          elevation: 0,
           padding: EdgeInsets.zero,
           child: SizedBox(
             height: 62,

@@ -194,16 +194,9 @@ class _Header extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xDDF1F8F6),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0x80A9CEC8)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x120F3D3A),
-            blurRadius: 16,
-            offset: Offset(0, 6),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFE2E8E4)),
       ),
       child: Column(
         children: [
@@ -363,18 +356,11 @@ class _PinStep extends StatelessWidget {
         Container(
           padding: const EdgeInsets.fromLTRB(18, 20, 18, 22),
           decoration: BoxDecoration(
-            color: const Color(0xDDF1F8F6),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: error != null ? Colors.red[200]! : const Color(0x80A9CEC8),
+              color: error != null ? Colors.red[200]! : const Color(0xFFE2E8E4),
             ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x120F3D3A),
-                blurRadius: 16,
-                offset: Offset(0, 6),
-              ),
-            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
 import 'glass_modal_surface.dart';
 
 const _teal = Color(0xFF0F766E);
@@ -51,18 +52,15 @@ class FilterSheetScaffold extends StatelessWidget {
                     Expanded(
                       child: Text(
                         title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 17,
-                        ),
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ),
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(Icons.close_rounded),
                       style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFFF1F2F4),
-                        foregroundColor: Colors.black87,
+                        backgroundColor: AppColors.surfaceMuted,
+                        foregroundColor: AppColors.ink,
                       ),
                     ),
                   ],
@@ -89,11 +87,7 @@ class FilterSheetScaffold extends StatelessWidget {
                         height: 48,
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.grey[700],
-                            side: const BorderSide(color: Color(0xFFD8DBE2)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                            foregroundColor: AppColors.ink,
                           ),
                           onPressed: onReset,
                           child: const Text(
@@ -112,8 +106,8 @@ class FilterSheetScaffold extends StatelessWidget {
                           style: FilledButton.styleFrom(
                             backgroundColor: _teal,
                             elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: AppRadius.borderRadius,
                             ),
                           ),
                           onPressed: onTerapkan,
@@ -200,7 +194,7 @@ class FilterChip2 extends StatelessWidget {
       selected: selected,
       onSelected: (_) => onTap(),
       showCheckmark: false,
-      backgroundColor: const Color(0xBFFFFFFF),
+      backgroundColor: Colors.white,
       selectedColor: _teal,
       labelStyle: TextStyle(
         color: selected ? Colors.white : Colors.black87,

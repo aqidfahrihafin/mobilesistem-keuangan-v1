@@ -48,13 +48,6 @@ class SantriSummaryCard extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _teal.withValues(alpha: 0.28),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
                 ),
                 alignment: Alignment.center,
                 child: Text(
@@ -90,7 +83,11 @@ class SantriSummaryCard extends StatelessWidget {
               ),
               if (onTap != null) ...[
                 const SizedBox(width: 8),
-                Icon(Icons.unfold_more_rounded, color: Colors.grey[400], size: 20),
+                Icon(
+                  Icons.unfold_more_rounded,
+                  color: Colors.grey[400],
+                  size: 20,
+                ),
               ],
             ],
           ),
@@ -99,7 +96,11 @@ class SantriSummaryCard extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              Icon(Icons.account_balance_wallet_outlined, size: 15, color: Colors.grey[500]),
+              Icon(
+                Icons.account_balance_wallet_outlined,
+                size: 15,
+                color: Colors.grey[500],
+              ),
               const SizedBox(width: 6),
               Text(
                 saldoLabel,

@@ -231,7 +231,7 @@ class _TagihanDetailScreenState extends State<TagihanDetailScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: const Color(0xD9FFFFFF),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: const Color(0xFFE9EBEF)),
                   ),

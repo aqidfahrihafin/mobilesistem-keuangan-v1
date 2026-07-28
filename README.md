@@ -81,6 +81,18 @@ web (login & kata sandi awalnya sama-sama No. KK keluarga tsb).
 - Build release default mengarah ke `https://emall.ecometer.my.id/api` dan
   tetap dapat dioverride melalui `--dart-define=API_BASE_URL=...`.
 
+## Design system
+
+- Token warna, tipografi, spacing, radius, dan theme komponen berada di
+  `lib/theme/app_theme.dart`.
+- Seluruh halaman memakai background abu-hijau muda, surface putih, border
+  tipis, radius 10 px, dan shadow dekoratif seminimal mungkin.
+- `FlatCard`, dialog konfirmasi, bottom sheet filter, input, tombol, chip,
+  AppBar, dan navigasi menggunakan theme yang sama agar perubahan visual
+  berikutnya tidak perlu dilakukan satu per satu di setiap screen.
+- Text scale perangkat tetap dihormati dalam rentang 90–115% agar layout
+  finansial tetap stabil tanpa menonaktifkan aksesibilitas sepenuhnya.
+
 ## Struktur
 
 ```

@@ -3,9 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../services/auth_service.dart';
 import '../services/biometric_service.dart';
+import '../theme/app_theme.dart';
 import '../widgets/confirm_dialog.dart';
 import '../widgets/flat_card.dart';
-import '../widgets/geometric_pattern.dart';
 import 'about_screen.dart';
 import 'change_password_screen.dart';
 import 'edit_profile_screen.dart';
@@ -15,7 +15,6 @@ import 'version_screen.dart';
 
 const _bg = Colors.transparent;
 const _teal = Color(0xFF0F766E);
-const _tealDark = Color(0xFF115E59);
 
 class ProfilTab extends StatelessWidget {
   const ProfilTab({super.key});
@@ -29,219 +28,143 @@ class ProfilTab extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: _bg,
+      appBar: AppBar(title: const Text('Profil')),
       body: ListView(
-        padding: EdgeInsets.zero,
+        padding: AppSpacing.page,
         children: [
-          Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.topCenter,
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(10),
-                  bottomRight: Radius.circular(10),
-                ),
-                child: Container(
-                  height: 176,
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [_teal, _tealDark],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Positioned(
-                        right: -30,
-                        top: -30,
-                        child: Container(
-                          width: 130,
-                          height: 130,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.07),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: -20,
-                        bottom: -40,
-                        child: Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.06),
-                          ),
-                        ),
-                      ),
-                      const Positioned.fill(
-                        child: GeometricPatternBackground(opacity: 0.07),
-                      ),
-                      SafeArea(
-                        bottom: false,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                          child: Row(
-                            children: const [
-                              Text(
-                                'Profil',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: -38,
-                child: Stack(
+          FlatCard(
+            child: Row(
+              children: [
+                Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                      ),
-                      child: CircleAvatar(
-                        radius: 36,
-                        backgroundColor: _teal,
-                        child: Text(
-                          initial,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 26,
-                          ),
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundColor: const Color(0xFFE6F5F1),
+                      child: Text(
+                        initial,
+                        style: const TextStyle(
+                          color: _teal,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 22,
                         ),
                       ),
                     ),
                     Positioned(
-                      right: -2,
-                      bottom: -2,
-                      child: GestureDetector(
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const EditProfileScreen(),
-                          ),
+                      right: -4,
+                      bottom: -4,
+                      child: Material(
+                        color: AppColors.surface,
+                        shape: const CircleBorder(
+                          side: BorderSide(color: AppColors.border),
                         ),
-                        child: Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: _bg, width: 2),
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const EditProfileScreen(),
+                            ),
                           ),
-                          alignment: Alignment.center,
-                          child: const Icon(
-                            Icons.edit_rounded,
-                            size: 14,
-                            color: _teal,
+                          child: const SizedBox(
+                            width: 26,
+                            height: 26,
+                            child: Icon(
+                              Icons.edit_rounded,
+                              size: 13,
+                              color: _teal,
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 50),
-          Text(
-            user?.name ?? '-',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            user?.email ?? user?.phone ?? '-',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey[600], fontSize: 13),
-          ),
-          const SizedBox(height: 10),
-          Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-              decoration: BoxDecoration(
-                color: _teal.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(Icons.verified_user_outlined, size: 13, color: _teal),
-                  SizedBox(width: 5),
-                  Text(
-                    'Wali Santri',
-                    style: TextStyle(
-                      color: _teal,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11.5,
-                    ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user?.name ?? '-',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        user?.email ?? user?.phone ?? '-',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 8),
+                      const Row(
+                        children: [
+                          Icon(
+                            Icons.verified_user_outlined,
+                            size: 14,
+                            color: _teal,
+                          ),
+                          SizedBox(width: 5),
+                          Text(
+                            'Wali Santri',
+                            style: TextStyle(
+                              color: _teal,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 28),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: FlatCard(
-              color: const Color(0xD9FFFFFF),
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  _MenuTile(
-                    icon: Icons.person_outline,
-                    label: 'Edit Profil',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const EditProfileScreen(),
-                      ),
+          const SizedBox(height: 20),
+          FlatCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _MenuTile(
+                  icon: Icons.person_outline,
+                  label: 'Edit Profil',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const EditProfileScreen(),
                     ),
                   ),
-                  const Divider(height: 1, color: Color(0xFFE9EBEF)),
-                  _MenuTile(
-                    icon: Icons.lock_outline,
-                    label: 'Ganti Kata Sandi',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const ChangePasswordScreen(),
-                      ),
+                ),
+                const Divider(height: 1, color: Color(0xFFE9EBEF)),
+                _MenuTile(
+                  icon: Icons.lock_outline,
+                  label: 'Ganti Kata Sandi',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ChangePasswordScreen(),
                     ),
                   ),
-                  const Divider(height: 1, color: Color(0xFFE9EBEF)),
-                  _MenuTile(
-                    icon: Icons.pin_outlined,
-                    label: 'PIN Transaksi',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const PinSetupScreen()),
-                    ),
+                ),
+                const Divider(height: 1, color: Color(0xFFE9EBEF)),
+                _MenuTile(
+                  icon: Icons.pin_outlined,
+                  label: 'PIN Transaksi',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const PinSetupScreen()),
                   ),
-                  // Owns its own leading divider (only rendered alongside
-                  // the tile itself) so nothing collapses into a stray
-                  // double divider when the device has no biometric
-                  // hardware and the tile hides itself entirely.
-                  const _BiometricToggleTile(),
-                ],
-              ),
+                ),
+                // Owns its own leading divider (only rendered alongside
+                // the tile itself) so nothing collapses into a stray
+                // double divider when the device has no biometric
+                // hardware and the tile hides itself entirely.
+                const _BiometricToggleTile(),
+              ],
             ),
           ),
           const SizedBox(height: 20),
           Padding(
-            padding: const EdgeInsets.only(left: 24, bottom: 10),
+            padding: const EdgeInsets.only(left: 4, bottom: 10),
             child: Text(
               'Lainnya',
               style: TextStyle(
@@ -252,52 +175,44 @@ class ProfilTab extends StatelessWidget {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: FlatCard(
-              color: const Color(0xD9FFFFFF),
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  _MenuTile(
-                    icon: Icons.info_outline_rounded,
-                    label: 'Tentang Aplikasi',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const AboutScreen()),
-                    ),
+          FlatCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _MenuTile(
+                  icon: Icons.info_outline_rounded,
+                  label: 'Tentang Aplikasi',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const AboutScreen()),
                   ),
-                  const Divider(height: 1, color: Color(0xFFE9EBEF)),
-                  _MenuTile(
-                    icon: Icons.new_releases_outlined,
-                    label: 'Versi Aplikasi',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const VersionScreen()),
-                    ),
+                ),
+                const Divider(height: 1, color: Color(0xFFE9EBEF)),
+                _MenuTile(
+                  icon: Icons.new_releases_outlined,
+                  label: 'Versi Aplikasi',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const VersionScreen()),
                   ),
-                  const Divider(height: 1, color: Color(0xFFE9EBEF)),
-                  _MenuTile(
-                    icon: Icons.quiz_outlined,
-                    label: 'Pusat Bantuan (QNA)',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const FaqScreen()),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                const Divider(height: 1, color: Color(0xFFE9EBEF)),
+                _MenuTile(
+                  icon: Icons.quiz_outlined,
+                  label: 'Pusat Bantuan (QNA)',
+                  onTap: () => Navigator.of(
+                    context,
+                  ).push(MaterialPageRoute(builder: (_) => const FaqScreen())),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 20),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: FlatCard(
-              color: const Color(0xD9FFFFFF),
-              padding: EdgeInsets.zero,
-              child: _MenuTile(
-                icon: Icons.logout,
-                label: 'Keluar',
-                danger: true,
-                onTap: () => _confirmLogout(context),
-              ),
+          FlatCard(
+            padding: EdgeInsets.zero,
+            child: _MenuTile(
+              icon: Icons.logout,
+              label: 'Keluar',
+              danger: true,
+              onTap: () => _confirmLogout(context),
             ),
           ),
           const SizedBox(height: 24),

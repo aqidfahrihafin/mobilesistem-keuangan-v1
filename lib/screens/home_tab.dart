@@ -380,7 +380,7 @@ class _AnakDashboardState extends State<_AnakDashboard> {
 
                         if (items.isEmpty) {
                           return FlatCard(
-                            color: const Color(0xD9FFFFFF),
+                            color: Colors.white,
                             child: const EmptyStateView(
                               icon: Icons.swap_horiz_rounded,
                               message: 'Belum ada transaksi.',
@@ -390,7 +390,7 @@ class _AnakDashboardState extends State<_AnakDashboard> {
                         }
 
                         return FlatCard(
-                          color: const Color(0xD9FFFFFF),
+                          color: Colors.white,
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           child: Column(
                             children: [
@@ -629,13 +629,6 @@ class _BalanceCard extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: _teal.withValues(alpha: 0.25),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
@@ -864,16 +857,9 @@ class _StatTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
           decoration: BoxDecoration(
-            color: const Color(0xDCF4F9F8),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xCCFFFFFF)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x0D0F3D3A),
-                blurRadius: 16,
-                offset: Offset(0, 6),
-              ),
-            ],
+            border: Border.all(color: const Color(0xFFE2E8E4)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -963,7 +949,7 @@ class _QuickActionsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FlatCard(
-      color: const Color(0xD9FFFFFF),
+      color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: LayoutBuilder(
         builder: (context, constraints) {

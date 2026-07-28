@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
 import 'glass_modal_surface.dart';
 
 const _teal = Color(0xFF0F766E);
@@ -63,9 +64,9 @@ class ConfirmDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+      insetPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
       child: GlassModalSurface(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: AppRadius.borderRadius,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 26, 24, 18),
           child: Column(
@@ -85,21 +86,16 @@ class ConfirmDialog extends StatelessWidget {
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+                style: Theme.of(context).textTheme.titleMedium,
               ),
               if (message != null) ...[
                 const SizedBox(height: 8),
                 Text(
                   message!,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 13.5,
-                    height: 1.4,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: AppColors.muted),
                 ),
               ],
               if (content != null) ...[const SizedBox(height: 14), content!],
@@ -111,11 +107,7 @@ class ConfirmDialog extends StatelessWidget {
                       height: 46,
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.grey[700],
-                          side: const BorderSide(color: Color(0xFFD8DBE2)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                          foregroundColor: AppColors.ink,
                         ),
                         onPressed: () => Navigator.of(context).pop(false),
                         child: Text(
@@ -133,8 +125,8 @@ class ConfirmDialog extends StatelessWidget {
                         style: FilledButton.styleFrom(
                           backgroundColor: confirmColor,
                           elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: AppRadius.borderRadius,
                           ),
                         ),
                         onPressed: () => Navigator.of(context).pop(true),

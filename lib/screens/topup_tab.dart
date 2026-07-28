@@ -304,9 +304,9 @@ class _TopupTabState extends State<TopupTab> {
                             vertical: 12,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xDCF4F9F8),
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xCCFFFFFF)),
+                            border: Border.all(color: const Color(0xFFE2E8E4)),
                           ),
                           child: Row(
                             children: [

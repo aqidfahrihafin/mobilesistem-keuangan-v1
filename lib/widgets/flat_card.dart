@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Thin border instead of a drop shadow - the "flat" look used throughout
-/// this app (PayPal-style) instead of Material's default elevated Card.
+import '../theme/app_theme.dart';
+
+/// Canonical application surface: solid, bordered, and shadow-free.
 class FlatCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -20,24 +21,13 @@ class FlatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(10);
+    const radius = AppRadius.borderRadius;
     final content = Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: color ?? (listItem ? Colors.white : const Color(0xEAF1F8F6)),
+        color: color ?? AppColors.surface,
         borderRadius: listItem ? BorderRadius.zero : radius,
-        border: listItem
-            ? null
-            : Border.all(color: const Color(0xE6FFFFFF), width: 1.1),
-        boxShadow: listItem
-            ? null
-            : const [
-                BoxShadow(
-                  color: Color(0x180F3D3A),
-                  blurRadius: 18,
-                  offset: Offset(0, 7),
-                ),
-              ],
+        border: listItem ? null : Border.all(color: AppColors.border),
       ),
       child: child,
     );

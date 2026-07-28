@@ -473,12 +473,12 @@ class _TransferFormState extends State<_TransferForm> {
                         decoration: BoxDecoration(
                           color: diBawahMinimum
                               ? const Color(0xBFE8EEED)
-                              : const Color(0xDDF1F8F6),
+                              : Colors.white,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: diBawahMinimum
                                 ? const Color(0x6694A3A0)
-                                : const Color(0x80A9CEC8),
+                                : const Color(0xFFE2E8E4),
                           ),
                         ),
                         child: Row(
@@ -620,16 +620,9 @@ class _AnakRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xDDF1F8F6),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0x80A9CEC8)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x120F3D3A),
-            blurRadius: 14,
-            offset: Offset(0, 5),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFE2E8E4)),
       ),
       child: Row(
         children: [

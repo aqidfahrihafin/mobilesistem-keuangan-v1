@@ -52,17 +52,8 @@ class MetodeTile extends StatelessWidget {
             color: const Color(0xE6F4F9F8),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: selected
-                  ? _teal.withValues(alpha: 0.35)
-                  : const Color(0xBFFFFFFF),
+              color: selected ? _teal.withValues(alpha: 0.35) : Colors.white,
             ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x0D0F3D3A),
-                blurRadius: 18,
-                offset: Offset(0, 7),
-              ),
-            ],
           ),
           child: Row(
             children: [
@@ -78,15 +69,8 @@ class MetodeTile extends StatelessWidget {
                       border: Border.all(
                         color: selected
                             ? _teal.withValues(alpha: 0.35)
-                            : const Color(0xBFFFFFFF),
+                            : Colors.white,
                       ),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x0A0F3D3A),
-                          blurRadius: 10,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
                     ),
                     alignment: Alignment.center,
                     child: Icon(metode.icon, color: _teal, size: 23),
