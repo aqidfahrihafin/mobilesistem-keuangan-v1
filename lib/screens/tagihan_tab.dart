@@ -108,7 +108,7 @@ class _TagihanListState extends State<_TagihanList> {
 
   // Default filter is "belum lunas" - that's what a wali most needs to act
   // on; the full history is one tap away via the "Semua" chip.
-  String? _filter = 'belum_lunas';
+  String? _filter;
   String? _periodeFilter;
 
   // Multi-select bulk payment - _selectedIds tracks tagihan.id rather than
@@ -343,6 +343,29 @@ class _TagihanListState extends State<_TagihanList> {
                       t.periodeLabel == _periodeFilter;
                   return statusOk && periodeOk;
                 }).toList();
+                const statusOrder = {
+                  'belum_lunas': 0,
+                  'sebagian': 1,
+                  'lunas': 2,
+                  'dibatalkan': 3,
+                };
+                items.sort((a, b) {
+                  final byStatus = (statusOrder[a.status] ?? 9).compareTo(
+                    statusOrder[b.status] ?? 9,
+                  );
+                  if (byStatus != 0) return byStatus;
+                  final aDue = DateTime.tryParse(a.jatuhTempo ?? '');
+                  final bDue = DateTime.tryParse(b.jatuhTempo ?? '');
+                  if (aDue != null && bDue != null) {
+                    final byDue = aDue.compareTo(bDue);
+                    if (byDue != 0) return byDue;
+                  } else if (aDue != null) {
+                    return -1;
+                  } else if (bDue != null) {
+                    return 1;
+                  }
+                  return b.id.compareTo(a.id);
+                });
 
                 if (items.isEmpty) {
                   return ListView(

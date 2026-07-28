@@ -97,10 +97,7 @@ class ActiveFilterBar extends StatelessWidget {
                   ),
                 ),
               ),
-              if (trailing != null) ...[
-                const SizedBox(width: 8),
-                trailing!,
-              ],
+              if (trailing != null) ...[const SizedBox(width: 8), trailing!],
               const SizedBox(width: 10),
               InkWell(
                 onTap: onOpenFilter,
@@ -109,14 +106,17 @@ class ActiveFilterBar extends StatelessWidget {
                   width: 34,
                   height: 34,
                   decoration: BoxDecoration(
-                    color: anyActive ? _teal : const Color(0xFFF1F2F4),
+                    color: Colors.white,
                     shape: BoxShape.circle,
+                    border: Border.all(
+                      color: anyActive ? _teal : const Color(0xFFD8DBE2),
+                    ),
                   ),
                   alignment: Alignment.center,
                   child: Icon(
                     Icons.tune_rounded,
                     size: 17,
-                    color: anyActive ? Colors.white : Colors.grey[700],
+                    color: anyActive ? _teal : Colors.grey[700],
                   ),
                 ),
               ),

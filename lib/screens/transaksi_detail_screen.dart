@@ -262,351 +262,353 @@ class _TransaksiDetailScreenState extends State<TransaksiDetailScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          child: RepaintBoundary(
-            key: _shareKey,
-            // Explicit background baked into the captured region itself -
-            // without it the shared PNG would have a transparent (often
-            // rendered black) background, since only the cards below paint
-            // their own surface, not this wrapping Column.
-            child: Container(
-              width: double.infinity,
-              color: _bg,
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          width: 140,
-                          height: 140,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              // Small celebratory sparkles around the badge -
-                              // only for a settled (berhasil) transaksi, since
-                              // a "confetti" flourish doesn't fit a pending or
-                              // rejected receipt.
-                              if (tx.status == 'berhasil') ...[
-                                Positioned(
-                                  top: 10,
-                                  left: 18,
-                                  child: Icon(
-                                    Icons.auto_awesome_rounded,
-                                    size: 13,
-                                    color: iconFg.withValues(alpha: 0.4),
-                                  ),
-                                ),
-                                Positioned(
-                                  top: 22,
-                                  right: 12,
-                                  child: Icon(
-                                    Icons.auto_awesome_rounded,
-                                    size: 18,
-                                    color: iconFg.withValues(alpha: 0.3),
-                                  ),
-                                ),
-                                Positioned(
-                                  bottom: 14,
-                                  left: 8,
-                                  child: Icon(
-                                    Icons.auto_awesome_rounded,
-                                    size: 10,
-                                    color: iconFg.withValues(alpha: 0.35),
-                                  ),
-                                ),
-                                Positioned(
-                                  bottom: 20,
-                                  right: 22,
-                                  child: Icon(
-                                    Icons.auto_awesome_rounded,
-                                    size: 9,
-                                    color: iconFg.withValues(alpha: 0.45),
-                                  ),
-                                ),
-                              ],
-                              Container(
-                                width: 84,
-                                height: 84,
-                                decoration: BoxDecoration(
-                                  color: iconBg,
-                                  shape: BoxShape.circle,
-                                ),
+          child: Column(
+            children: [
+              RepaintBoundary(
+                key: _shareKey,
+                // Only the official proof content belongs in the shared
+                // image. Page controls such as the PDF download button stay
+                // outside this capture boundary.
+                child: Container(
+                  width: double.infinity,
+                  color: _bg,
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: Column(
+                          children: [
+                            SizedBox(
+                              width: 140,
+                              height: 140,
+                              child: Stack(
                                 alignment: Alignment.center,
-                                child: Icon(icon, color: iconFg, size: 38),
+                                children: [
+                                  // Small celebratory sparkles around the badge -
+                                  // only for a settled (berhasil) transaksi, since
+                                  // a "confetti" flourish doesn't fit a pending or
+                                  // rejected receipt.
+                                  if (tx.status == 'berhasil') ...[
+                                    Positioned(
+                                      top: 10,
+                                      left: 18,
+                                      child: Icon(
+                                        Icons.auto_awesome_rounded,
+                                        size: 13,
+                                        color: iconFg.withValues(alpha: 0.4),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 22,
+                                      right: 12,
+                                      child: Icon(
+                                        Icons.auto_awesome_rounded,
+                                        size: 18,
+                                        color: iconFg.withValues(alpha: 0.3),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: 14,
+                                      left: 8,
+                                      child: Icon(
+                                        Icons.auto_awesome_rounded,
+                                        size: 10,
+                                        color: iconFg.withValues(alpha: 0.35),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: 20,
+                                      right: 22,
+                                      child: Icon(
+                                        Icons.auto_awesome_rounded,
+                                        size: 9,
+                                        color: iconFg.withValues(alpha: 0.45),
+                                      ),
+                                    ),
+                                  ],
+                                  Container(
+                                    width: 84,
+                                    height: 84,
+                                    decoration: BoxDecoration(
+                                      color: iconBg,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Icon(icon, color: iconFg, size: 38),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text.rich(
-                          TextSpan(
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 22,
                             ),
-                            children: [
+                            const SizedBox(height: 8),
+                            Text.rich(
                               TextSpan(
-                                text: '${_aksiLabel[tx.jenis] ?? 'Transaksi'} ',
-                                style: const TextStyle(color: Colors.black87),
-                              ),
-                              TextSpan(
-                                text: _statusSuffix(tx.status),
-                                style: TextStyle(color: iconFg),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Text(
-                            _deskripsi(tx),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 13.5,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE9EBEF)),
-                    ),
-                    child: Column(
-                      children: [
-                        _row(
-                          'Jenis',
-                          jenisTransaksiLabel[tx.jenis] ?? tx.jenis,
-                          icon: Icons.receipt_long_rounded,
-                          iconBg: iconBg,
-                          iconFg: iconFg,
-                        ),
-                        _divider(),
-                        // topup_transfer_wali gets a Nominal Transfer/Biaya
-                        // Admin/Total Transfer breakdown instead of a single
-                        // Nominal row, whenever a fee was actually recorded
-                        // for it (see TopupWaliService::settle()) - every
-                        // other jenis keeps the plain single-row display.
-                        if (tx.jenis == 'topup_transfer_wali' &&
-                            tx.biayaMidtrans != null) ...[
-                          _row(
-                            'Nominal Transfer',
-                            formatRupiah(tx.nominal),
-                            icon: Icons.account_balance_wallet_rounded,
-                            iconBg: iconBg,
-                            iconFg: iconFg,
-                          ),
-                          _divider(),
-                          _row(
-                            'Biaya Admin',
-                            // biayaDitanggungWali == true berarti biayanya
-                            // DIBEBANKAN ke wali (wali yang bayar lebih) -
-                            // hanya kasus ini yang menampilkan nominalnya.
-                            // false/null berarti pesantren yang menanggung,
-                            // jadi selalu "Gratis" tanpa embel-embel angka,
-                            // konsisten berapa pun biaya_midtrans yang
-                            // sebenarnya tercatat di baliknya.
-                            (tx.biayaDitanggungWali == true &&
-                                    tx.biayaMidtrans! > 0)
-                                ? formatRupiah(tx.biayaMidtrans!)
-                                : 'Gratis',
-                            icon: Icons.receipt_rounded,
-                            iconBg: iconBg,
-                            iconFg: iconFg,
-                            valueColor:
-                                (tx.biayaDitanggungWali == true &&
-                                    tx.biayaMidtrans! > 0)
-                                ? null
-                                : const Color(0xFF15803D),
-                          ),
-                          _divider(),
-                          _row(
-                            'Total Transfer',
-                            formatRupiah(
-                              tx.nominal +
-                                  ((tx.biayaDitanggungWali == true)
-                                      ? tx.biayaMidtrans!
-                                      : 0),
-                            ),
-                            icon: Icons.payments_rounded,
-                            iconBg: iconBg,
-                            iconFg: iconFg,
-                            bold: true,
-                            valueColor: iconFg,
-                          ),
-                        ] else
-                          _row(
-                            'Nominal',
-                            formatRupiah(tx.nominal),
-                            icon: Icons.account_balance_wallet_rounded,
-                            iconBg: iconBg,
-                            iconFg: iconFg,
-                            bold: true,
-                            valueColor: iconFg,
-                          ),
-                        _divider(),
-                        // Both sides of a transfer antar santri, right in
-                        // this card - the reference/kantin single-party
-                        // layout below (_ReferensiCard) doesn't fit here
-                        // since a transfer genuinely has two santri, not one
-                        // counterparty against an implicit "you".
-                        if (tx.jenis == 'transfer_antar_santri' &&
-                            tx.referensi != null) ...[
-                          _DariKeTimeline(
-                            self: context.watch<AnakProvider>().selected,
-                            other: tx.referensi!,
-                            selfIsPengirim: !tx.isKredit,
-                            iconBg: iconBg,
-                            iconFg: iconFg,
-                          ),
-                          _divider(),
-                        ],
-                        _row(
-                          'Tanggal & Waktu',
-                          formatTanggalWaktu(tx.createdAt),
-                          icon: Icons.calendar_today_rounded,
-                          iconBg: iconBg,
-                          iconFg: iconFg,
-                        ),
-                        _divider(),
-                        _row(
-                          'Metode',
-                          _metodeDisplay(tx),
-                          icon: Icons.credit_card_rounded,
-                          iconBg: iconBg,
-                          iconFg: iconFg,
-                        ),
-                        _divider(),
-                        _row(
-                          'No. Referensi',
-                          noReferensi,
-                          icon: Icons.tag_rounded,
-                          iconBg: iconBg,
-                          iconFg: iconFg,
-                        ),
-                        if (tx.catatan != null && tx.catatan!.isNotEmpty) ...[
-                          _divider(),
-                          _row(
-                            'Catatan',
-                            tx.catatan!,
-                            icon: Icons.notes_rounded,
-                            iconBg: iconBg,
-                            iconFg: iconFg,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  // Only for kantin (single counterparty) - a transfer's two
-                  // parties are already shown inline above via _DariKeTimeline.
-                  if (tx.referensi != null &&
-                      tx.jenis != 'transfer_antar_santri') ...[
-                    const SizedBox(height: 16),
-                    _ReferensiCard(tx: tx),
-                  ],
-                  if (tx.tagihan != null) ...[
-                    const SizedBox(height: 16),
-                    _TagihanRingkasCard(tagihan: tx.tagihan!),
-                  ],
-                  const SizedBox(height: 20),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE9EBEF)),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: _teal.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          alignment: Alignment.center,
-                          child: const Icon(
-                            Icons.verified_user_outlined,
-                            color: _teal,
-                            size: 19,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Bukti Transaksi',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontWeight: FontWeight.bold,
+                                  fontSize: 22,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text:
+                                        '${_aksiLabel[tx.jenis] ?? 'Transaksi'} ',
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: _statusSuffix(tx.status),
+                                    style: TextStyle(color: iconFg),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                              child: Text(
+                                _deskripsi(tx),
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.grey[600],
                                   fontSize: 13.5,
+                                  height: 1.4,
                                 ),
                               ),
-                              const SizedBox(height: 3),
-                              Text(
-                                'Dibuat otomatis oleh sistem '
-                                '${context.watch<AppInfoProvider>().namaAplikasi ?? 'E-Mall Annuqayah'}.',
-                                style: TextStyle(
-                                  color: Colors.grey[500],
-                                  fontSize: 11.5,
-                                  height: 1.3,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFE9EBEF)),
+                        ),
+                        child: Column(
+                          children: [
+                            _row(
+                              'Jenis',
+                              jenisTransaksiLabel[tx.jenis] ?? tx.jenis,
+                              icon: Icons.receipt_long_rounded,
+                              iconBg: iconBg,
+                              iconFg: iconFg,
+                            ),
+                            _divider(),
+                            // topup_transfer_wali gets a Nominal Transfer/Biaya
+                            // Admin/Total Transfer breakdown instead of a single
+                            // Nominal row, whenever a fee was actually recorded
+                            // for it (see TopupWaliService::settle()) - every
+                            // other jenis keeps the plain single-row display.
+                            if (tx.jenis == 'topup_transfer_wali' &&
+                                tx.biayaMidtrans != null) ...[
+                              _row(
+                                'Nominal Transfer',
+                                formatRupiah(tx.nominal),
+                                icon: Icons.account_balance_wallet_rounded,
+                                iconBg: iconBg,
+                                iconFg: iconFg,
+                              ),
+                              _divider(),
+                              _row(
+                                'Biaya Admin',
+                                // biayaDitanggungWali == true berarti biayanya
+                                // DIBEBANKAN ke wali (wali yang bayar lebih) -
+                                // hanya kasus ini yang menampilkan nominalnya.
+                                // false/null berarti pesantren yang menanggung,
+                                // jadi selalu "Gratis" tanpa embel-embel angka,
+                                // konsisten berapa pun biaya_midtrans yang
+                                // sebenarnya tercatat di baliknya.
+                                (tx.biayaDitanggungWali == true &&
+                                        tx.biayaMidtrans! > 0)
+                                    ? formatRupiah(tx.biayaMidtrans!)
+                                    : 'Gratis',
+                                icon: Icons.receipt_rounded,
+                                iconBg: iconBg,
+                                iconFg: iconFg,
+                                valueColor:
+                                    (tx.biayaDitanggungWali == true &&
+                                        tx.biayaMidtrans! > 0)
+                                    ? null
+                                    : const Color(0xFF15803D),
+                              ),
+                              _divider(),
+                              _row(
+                                'Total Transfer',
+                                formatRupiah(
+                                  tx.nominal +
+                                      ((tx.biayaDitanggungWali == true)
+                                          ? tx.biayaMidtrans!
+                                          : 0),
                                 ),
+                                icon: Icons.payments_rounded,
+                                iconBg: iconBg,
+                                iconFg: iconFg,
+                                bold: true,
+                                valueColor: iconFg,
+                              ),
+                            ] else
+                              _row(
+                                'Nominal',
+                                formatRupiah(tx.nominal),
+                                icon: Icons.account_balance_wallet_rounded,
+                                iconBg: iconBg,
+                                iconFg: iconFg,
+                                bold: true,
+                                valueColor: iconFg,
+                              ),
+                            _divider(),
+                            // Both sides of a transfer antar santri, right in
+                            // this card - the reference/kantin single-party
+                            // layout below (_ReferensiCard) doesn't fit here
+                            // since a transfer genuinely has two santri, not one
+                            // counterparty against an implicit "you".
+                            if (tx.jenis == 'transfer_antar_santri' &&
+                                tx.referensi != null) ...[
+                              _DariKeTimeline(
+                                self: context.watch<AnakProvider>().selected,
+                                other: tx.referensi!,
+                                selfIsPengirim: !tx.isKredit,
+                                iconBg: iconBg,
+                                iconFg: iconFg,
+                              ),
+                              _divider(),
+                            ],
+                            _row(
+                              'Tanggal & Waktu',
+                              formatTanggalWaktu(tx.createdAt),
+                              icon: Icons.calendar_today_rounded,
+                              iconBg: iconBg,
+                              iconFg: iconFg,
+                            ),
+                            _divider(),
+                            _row(
+                              'Metode',
+                              _metodeDisplay(tx),
+                              icon: Icons.credit_card_rounded,
+                              iconBg: iconBg,
+                              iconFg: iconFg,
+                            ),
+                            _divider(),
+                            _row(
+                              'No. Referensi',
+                              noReferensi,
+                              icon: Icons.tag_rounded,
+                              iconBg: iconBg,
+                              iconFg: iconFg,
+                            ),
+                            if (tx.catatan != null &&
+                                tx.catatan!.isNotEmpty) ...[
+                              _divider(),
+                              _row(
+                                'Catatan',
+                                tx.catatan!,
+                                icon: Icons.notes_rounded,
+                                iconBg: iconBg,
+                                iconFg: iconFg,
                               ),
                             ],
-                          ),
+                          ],
                         ),
-                        Icon(
-                          Icons.workspace_premium_outlined,
-                          size: 30,
-                          color: _teal.withValues(alpha: 0.25),
-                        ),
+                      ),
+                      // Only for kantin (single counterparty) - a transfer's two
+                      // parties are already shown inline above via _DariKeTimeline.
+                      if (tx.referensi != null &&
+                          tx.jenis != 'transfer_antar_santri') ...[
+                        const SizedBox(height: 16),
+                        _ReferensiCard(tx: tx),
                       ],
+                      if (tx.tagihan != null) ...[
+                        const SizedBox(height: 16),
+                        _TagihanRingkasCard(tagihan: tx.tagihan!),
+                      ],
+                      const SizedBox(height: 20),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFE9EBEF)),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: _teal.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: const Icon(
+                                Icons.verified_user_outlined,
+                                color: _teal,
+                                size: 19,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Bukti Transaksi',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    'Dibuat otomatis oleh sistem '
+                                    '${context.watch<AppInfoProvider>().namaAplikasi ?? 'E-Mall Annuqayah'}.',
+                                    style: TextStyle(
+                                      color: Colors.grey[500],
+                                      fontSize: 11.5,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.workspace_premium_outlined,
+                              size: 30,
+                              color: _teal.withValues(alpha: 0.25),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (tx.kwitansiId != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _unduhingKwitansi
+                          ? null
+                          : () => _unduhKwitansi(tx.kwitansiId!),
+                      icon: _unduhingKwitansi
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.description_outlined, size: 18),
+                      label: const Text('Unduh Kwitansi Resmi (PDF)'),
                     ),
                   ),
-                  // Only once a kwitansi resmi actually exists for this
-                  // transaksi (pembayaran_tagihan from saldo, or
-                  // pembayaran_kantin - see KwitansiService). Separate from
-                  // the informal "Bukti Transaksi" card above it: that one
-                  // describes THIS receipt view itself, this button opens
-                  // the officially-numbered PDF document.
-                  if (tx.kwitansiId != null) ...[
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _unduhingKwitansi
-                            ? null
-                            : () => _unduhKwitansi(tx.kwitansiId!),
-                        icon: _unduhingKwitansi
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.description_outlined, size: 18),
-                        label: const Text('Unduh Kwitansi Resmi (PDF)'),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+                ),
+            ],
           ),
         ),
       ),

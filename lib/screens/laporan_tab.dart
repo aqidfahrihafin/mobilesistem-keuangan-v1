@@ -670,9 +670,9 @@ class _LaporanRingkasanState extends State<_LaporanRingkasan> {
                 else
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF0F9F7),
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFD5EAE7)),
+                      border: Border.all(color: const Color(0xFFE2E8E4)),
                     ),
                     child: Column(
                       children: perJenis.entries.map((entry) {
@@ -787,23 +787,15 @@ class _SummaryCard extends StatelessWidget {
     final effectiveColor = full && !isPositive
         ? const Color(0xFFB91C1C)
         : color;
-    final surfaceColor = full && !isPositive
-        ? const Color(0xFFFDF0F0)
-        : const Color(0xFFF0F9F7);
-
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: full ? 16 : 13,
         vertical: full ? 15 : 14,
       ),
       decoration: BoxDecoration(
-        color: surfaceColor,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: full && !isPositive
-              ? const Color(0xFFF2D5D5)
-              : const Color(0xFFD5EAE7),
-        ),
+        border: Border.all(color: const Color(0xFFE2E8E4)),
       ),
       child: Row(
         crossAxisAlignment: full
@@ -814,7 +806,7 @@ class _SummaryCard extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.9),
+              color: effectiveColor.withValues(alpha: 0.09),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: effectiveColor, size: 18),

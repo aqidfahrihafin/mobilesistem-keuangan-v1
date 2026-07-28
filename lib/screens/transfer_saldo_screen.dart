@@ -67,6 +67,28 @@ class TransferSaldoScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         elevation: 0,
+        actions: [
+          IconButton(
+            tooltip: 'Info transfer',
+            icon: const Icon(Icons.help_outline_rounded),
+            onPressed: () => showDialog<void>(
+              context: context,
+              builder: (dialogContext) => AlertDialog(
+                title: const Text('Transfer keluarga'),
+                content: const Text(
+                  'Transfer hanya dapat dilakukan ke santri dalam satu Kartu Keluarga. Saldo pengirim juga harus tetap berada di atas batas minimum.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: const Text('Mengerti'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: SafeArea(child: body),
     );
@@ -85,6 +107,7 @@ class _TransferForm extends StatefulWidget {
 class _TransferFormState extends State<_TransferForm> {
   late Future<List<Anak>> _saudaraFuture;
   final _nominalController = TextEditingController();
+  final _nominalFocus = FocusNode();
 
   Anak? _ke;
   bool _submitting = false;
@@ -101,7 +124,12 @@ class _TransferFormState extends State<_TransferForm> {
   void initState() {
     super.initState();
     _saudaraFuture = context.read<WaliApi>().getSaudara(widget.dari.id);
+    _nominalFocus.addListener(_refreshNominal);
     _loadMinimal();
+  }
+
+  void _refreshNominal() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadMinimal() async {
@@ -124,6 +152,9 @@ class _TransferFormState extends State<_TransferForm> {
 
   @override
   void dispose() {
+    _nominalFocus
+      ..removeListener(_refreshNominal)
+      ..dispose();
     _nominalController.dispose();
     super.dispose();
   }
@@ -378,68 +409,6 @@ class _TransferFormState extends State<_TransferForm> {
             children: [
               // Only one status message shown at a time - the specific
               // SaldoMinimumNotice below fully replaces this generic rules
-              // banner once blocked, instead of stacking two amber boxes
-              // back to back.
-              if (!diBawahMinimum) ...[
-                Container(
-                  padding: const EdgeInsets.fromLTRB(0, 0, 14, 0),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF4F8F7),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFDCE9E7)),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 44,
-                        constraints: const BoxConstraints(minHeight: 78),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFE3F1EF),
-                          borderRadius: BorderRadius.horizontal(
-                            left: Radius.circular(10),
-                          ),
-                        ),
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.shield_outlined,
-                          color: _teal,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text(
-                                'Transfer keluarga',
-                                style: TextStyle(
-                                  color: Color(0xFF0F172A),
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              SizedBox(height: 3),
-                              Text(
-                                'Hanya untuk santri dalam satu Kartu Keluarga dan saldo harus tetap di atas batas minimum.',
-                                style: TextStyle(
-                                  color: Color(0xFF64748B),
-                                  fontSize: 11.5,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-              ],
               const Padding(
                 padding: EdgeInsets.only(bottom: 8, left: 2),
                 child: Text(
@@ -534,6 +503,7 @@ class _TransferFormState extends State<_TransferForm> {
               ),
               TextField(
                 controller: _nominalController,
+                focusNode: _nominalFocus,
                 enabled: !diBawahMinimum,
                 keyboardType: TextInputType.number,
                 onChanged: (_) => setState(() => _nominalError = null),
@@ -542,7 +512,11 @@ class _TransferFormState extends State<_TransferForm> {
                   fontWeight: FontWeight.w600,
                 ),
                 decoration: InputDecoration(
-                  prefixText: 'Rp ',
+                  prefixText:
+                      (_nominalFocus.hasFocus ||
+                          _nominalController.text.isNotEmpty)
+                      ? 'Rp '
+                      : null,
                   hintText: '50.000',
                   errorText: _nominalError,
                   errorMaxLines: 2,

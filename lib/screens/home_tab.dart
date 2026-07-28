@@ -21,7 +21,7 @@ import '../widgets/flat_card.dart';
 import '../widgets/geometric_pattern.dart';
 import '../widgets/skeleton.dart';
 import '../widgets/transaksi_list_item.dart';
-import 'santri_profile_screen.dart';
+import 'all_services_screen.dart';
 import 'scan_bayar_screen.dart';
 import 'topup_tab.dart';
 import 'transaksi_detail_screen.dart';
@@ -939,7 +939,9 @@ class _StatTile extends StatelessWidget {
   }
 }
 
-/// Five one-tap entry points below the balance card - each pushes an
+/// Four primary entry points below the balance card. Less frequently used
+/// features live in a grouped "Semua Layanan" page so this row stays clear
+/// as the application grows.
 /// existing screen exactly like their other entry points elsewhere (the
 /// FAB, the Laporan tab). Transfer opens TransferSaldoScreen, moving saldo
 /// between santri sharing the same Kartu Keluarga (server-enforced).
@@ -954,8 +956,8 @@ class _QuickActionsRow extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           const gap = 6.0;
-          final raw = (constraints.maxWidth - gap * 4) / 5;
-          final size = raw.clamp(38.0, 46.0);
+          final raw = (constraints.maxWidth - gap * 3) / 4;
+          final size = raw.clamp(42.0, 50.0);
 
           return Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -982,15 +984,8 @@ class _QuickActionsRow extends StatelessWidget {
               ),
               _QuickActionButton(
                 size: size,
-                icon: Icons.history_rounded,
-                label: 'Riwayat',
-                color: const Color(0xFFC2710C),
-                onTap: () => context.read<TabIndexProvider>().go(2),
-              ),
-              _QuickActionButton(
-                size: size,
                 icon: Icons.qr_code_scanner_rounded,
-                label: 'Scan QR',
+                label: 'Bayar',
                 color: const Color(0xFF8B4BE8),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const ScanBayarScreen()),
@@ -998,13 +993,11 @@ class _QuickActionsRow extends StatelessWidget {
               ),
               _QuickActionButton(
                 size: size,
-                icon: Icons.badge_rounded,
-                label: 'Profil',
-                color: const Color(0xFFE23483),
+                icon: Icons.grid_view_rounded,
+                label: 'Lainnya',
+                color: const Color(0xFF475569),
                 onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const SantriProfileScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const AllServicesScreen()),
                 ),
               ),
             ],

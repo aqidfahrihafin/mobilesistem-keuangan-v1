@@ -33,6 +33,7 @@ class ScanBayarScreen extends StatefulWidget {
 class _ScanBayarScreenState extends State<ScanBayarScreen> {
   final MobileScannerController _controller = MobileScannerController();
   final _nominalController = TextEditingController();
+  final _nominalFocus = FocusNode();
 
   bool _looking = false;
   String? _lookupError;
@@ -50,7 +51,12 @@ class _ScanBayarScreenState extends State<ScanBayarScreen> {
   @override
   void initState() {
     super.initState();
+    _nominalFocus.addListener(_refreshNominal);
     _loadMinimal();
+  }
+
+  void _refreshNominal() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadMinimal() async {
@@ -68,6 +74,9 @@ class _ScanBayarScreenState extends State<ScanBayarScreen> {
   @override
   void dispose() {
     _controller.dispose();
+    _nominalFocus
+      ..removeListener(_refreshNominal)
+      ..dispose();
     _nominalController.dispose();
     super.dispose();
   }
@@ -473,11 +482,17 @@ class _ScanBayarScreenState extends State<ScanBayarScreen> {
             ),
             TextField(
               controller: _nominalController,
+              focusNode: _nominalFocus,
               enabled: !diBawahMinimum,
               keyboardType: TextInputType.number,
+              onChanged: (_) => setState(() => _payError = null),
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               decoration: InputDecoration(
-                prefixText: 'Rp ',
+                prefixText:
+                    (_nominalFocus.hasFocus ||
+                        _nominalController.text.isNotEmpty)
+                    ? 'Rp '
+                    : null,
                 hintText: '15.000',
                 errorText: _payError,
                 errorMaxLines: 2,

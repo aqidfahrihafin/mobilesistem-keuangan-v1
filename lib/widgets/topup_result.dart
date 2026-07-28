@@ -46,13 +46,15 @@ class MetodeTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         onTap: onTap,
         child: Container(
-          height: 116,
-          padding: const EdgeInsets.fromLTRB(14, 13, 12, 13),
+          constraints: const BoxConstraints(minHeight: 88),
+          padding: const EdgeInsets.fromLTRB(12, 10, 11, 10),
           decoration: BoxDecoration(
-            color: const Color(0xE6F4F9F8),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: selected ? _teal.withValues(alpha: 0.35) : Colors.white,
+              color: selected
+                  ? _teal.withValues(alpha: 0.45)
+                  : const Color(0xFFE2E8E4),
             ),
           ),
           child: Row(
@@ -61,19 +63,19 @@ class MetodeTile extends StatelessWidget {
                 clipBehavior: Clip.none,
                 children: [
                   Container(
-                    width: 54,
-                    height: 54,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
-                      color: const Color(0xECFAFDFC),
+                      color: const Color(0xFFF2F8F7),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: selected
                             ? _teal.withValues(alpha: 0.35)
-                            : Colors.white,
+                            : const Color(0xFFE2E8E4),
                       ),
                     ),
                     alignment: Alignment.center,
-                    child: Icon(metode.icon, color: _teal, size: 23),
+                    child: Icon(metode.icon, color: _teal, size: 21),
                   ),
                   if (selected)
                     Positioned(
@@ -100,7 +102,7 @@ class MetodeTile extends StatelessWidget {
                     ),
                 ],
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,7 +121,7 @@ class MetodeTile extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 2),
                     Text(
                       metode.label,
                       maxLines: 1,
@@ -130,7 +132,7 @@ class MetodeTile extends StatelessWidget {
                         color: Color(0xFF17212B),
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 2),
                     Text(
                       metode.subtitle,
                       maxLines: 2,
@@ -142,7 +144,7 @@ class MetodeTile extends StatelessWidget {
                       ),
                     ),
                     if (biayaEstimasi != null && biayaEstimasi! > 0) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       Text(
                         '+${formatRupiah(biayaEstimasi!)} biaya admin',
                         style: const TextStyle(
