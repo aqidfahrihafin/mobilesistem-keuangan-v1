@@ -416,7 +416,17 @@ class _MenuSwitchTile extends StatelessWidget {
               ),
             ),
           ),
-          Switch(value: value, onChanged: onChanged),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            inactiveTrackColor: const Color(0xFFE6F5F1),
+            inactiveThumbColor: _teal,
+            trackOutlineColor: WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.selected)
+                  ? Colors.transparent
+                  : const Color(0xFF8DC9C2),
+            ),
+          ),
         ],
       ),
     );

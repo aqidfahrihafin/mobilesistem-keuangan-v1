@@ -22,6 +22,10 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api
 `--dart-define`) sudah otomatis menyesuaikan skenario development paling
 umum (lihat `lib/config/api_config.dart`):
 
+Nilainya cukup sampai `/api`, jangan menambahkan `/wali`, karena endpoint
+aplikasi sudah memakai awalan `/wali/...`. Nilai `/api/wali` tetap
+dinormalisasi otomatis untuk mencegah URL ganda jika konfigurasi build keliru.
+
 | Menjalankan di | Alamat API yang dipakai |
 |---|---|
 | Emulator Android | `http://10.0.2.2:8000/api` (otomatis) |

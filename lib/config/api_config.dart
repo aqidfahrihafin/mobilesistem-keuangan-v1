@@ -32,18 +32,17 @@ class ApiConfig {
   static const String _override = String.fromEnvironment('API_BASE_URL');
 
   /// URL server produksi (hosting).
-  static const String _prodUrl =
-      'https://emall.ecometer.my.id/api';
+  static const String _prodUrl = 'https://emall.ecometer.my.id/api';
 
   /// Mengembalikan Base URL API sesuai kondisi aplikasi.
   static String get baseUrl {
     // Jika terdapat URL dari --dart-define,
     // maka URL tersebut digunakan.
-    if (_override.isNotEmpty) return _override;
+    if (_override.isNotEmpty) return _normalize(_override);
 
     // Jika aplikasi sudah dalam mode Release,
     // gunakan server produksi.
-    if (kReleaseMode) return _prodUrl;
+    if (kReleaseMode) return _normalize(_prodUrl);
 
     // Jika masih mode Debug dan dijalankan
     // menggunakan Android Emulator,
@@ -56,5 +55,16 @@ class ApiConfig {
     // gunakan localhost.
 
     return 'http://127.0.0.1:8000/api';
+  }
+
+  /// Service sudah menambahkan `/wali/...` pada setiap endpoint. Normalisasi
+  /// ini mencegah konfigurasi `/api/wali` membentuk URL ganda seperti
+  /// `/api/wali/wali/login`.
+  static String _normalize(String value) {
+    var normalized = value.trim().replaceFirst(RegExp(r'/+$'), '');
+    if (normalized.endsWith('/api/wali')) {
+      normalized = normalized.substring(0, normalized.length - 5);
+    }
+    return normalized;
   }
 }
