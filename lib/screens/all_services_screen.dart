@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/tab_index_provider.dart';
-import '../widgets/flat_card.dart';
 import 'faq_screen.dart';
+import 'login_pin_setup_screen.dart';
 import 'pin_setup_screen.dart';
 import 'santri_profile_screen.dart';
 import 'scan_bayar_screen.dart';
@@ -40,7 +40,7 @@ class AllServicesScreen extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
           children: [
             _ServiceSection(
-              title: 'Keuangan',
+              title: 'Layanan Utama',
               items: [
                 _ServiceItem(
                   icon: Icons.account_balance_wallet_rounded,
@@ -66,7 +66,7 @@ class AllServicesScreen extends StatelessWidget {
             ),
             const SizedBox(height: 22),
             _ServiceSection(
-              title: 'Informasi Santri',
+              title: 'Santri & Akun',
               items: [
                 _ServiceItem(
                   icon: Icons.badge_rounded,
@@ -78,12 +78,6 @@ class AllServicesScreen extends StatelessWidget {
                   label: 'Riwayat',
                   onTap: () => _goTab(context, 2),
                 ),
-              ],
-            ),
-            const SizedBox(height: 22),
-            _ServiceSection(
-              title: 'Akun & Bantuan',
-              items: [
                 _ServiceItem(
                   icon: Icons.person_outline_rounded,
                   label: 'Profil Wali',
@@ -94,10 +88,27 @@ class AllServicesScreen extends StatelessWidget {
                   label: 'PIN Transaksi',
                   onTap: () => _open(context, const PinSetupScreen()),
                 ),
+              ],
+            ),
+            const SizedBox(height: 22),
+            _ServiceSection(
+              title: 'Keamanan & Bantuan',
+              items: [
+                _ServiceItem(
+                  icon: Icons.lock_person_outlined,
+                  label: 'PIN Login',
+                  onTap: () => _open(context, const LoginPinSetupScreen()),
+                ),
                 _ServiceItem(
                   icon: Icons.help_outline_rounded,
                   label: 'Pusat Bantuan',
                   onTap: () => _open(context, const FaqScreen()),
+                ),
+                const _ServiceItem(
+                  icon: Icons.gavel_outlined,
+                  label: 'Pelanggaran',
+                  enabled: false,
+                  comingSoon: true,
                 ),
               ],
             ),
@@ -130,17 +141,25 @@ class _ServiceSection extends StatelessWidget {
             ),
           ),
         ),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: items.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 2.15,
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE2E8E4)),
           ),
-          itemBuilder: (context, index) => items[index],
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: items.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              crossAxisSpacing: 4,
+              mainAxisSpacing: 12,
+              mainAxisExtent: 82,
+            ),
+            itemBuilder: (context, index) => items[index],
+          ),
         ),
       ],
     );
@@ -150,52 +169,100 @@ class _ServiceSection extends StatelessWidget {
 class _ServiceItem extends StatelessWidget {
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool enabled;
+  final bool comingSoon;
 
   const _ServiceItem({
     required this.icon,
     required this.label,
-    required this.onTap,
+    this.onTap,
+    this.enabled = true,
+    this.comingSoon = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return FlatCard(
-      padding: EdgeInsets.zero,
-      color: Colors.white,
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: _teal.withValues(alpha: 0.09),
-                  borderRadius: BorderRadius.circular(10),
+        onTap: enabled
+            ? onTap
+            : () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Layanan ini akan segera tersedia.'),
                 ),
-                alignment: Alignment.center,
-                child: Icon(icon, color: _teal, size: 19),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    height: 1.2,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF17212B),
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: enabled
+                        ? _teal.withValues(alpha: 0.09)
+                        : const Color(0xFFF1F3F5),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: enabled
+                          ? _teal.withValues(alpha: 0.08)
+                          : const Color(0xFFE1E4E8),
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    icon,
+                    color: enabled ? _teal : const Color(0xFF98A2B3),
+                    size: 20,
                   ),
                 ),
+                if (comingSoon)
+                  Positioned(
+                    top: -5,
+                    right: -9,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F3F5),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFFD8DDE3)),
+                      ),
+                      child: const Text(
+                        'Segera',
+                        style: TextStyle(
+                          fontSize: 7.5,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF667085),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                height: 1.2,
+                fontWeight: FontWeight.w600,
+                color: enabled
+                    ? const Color(0xFF17212B)
+                    : const Color(0xFF98A2B3),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

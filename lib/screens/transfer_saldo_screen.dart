@@ -530,16 +530,41 @@ class _TransferFormState extends State<_TransferForm> {
                 ),
               ),
               if (minimal != null && !diBawahMinimum)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8, left: 2),
-                  child: Text(
-                    'Saldo bisa ditransfer: ${formatRupiah((widget.dari.saldo - minimal).clamp(0, widget.dari.saldo))} '
-                    '(${formatRupiah(minimal)} disisakan sebagai batas minimum).',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color: Colors.grey[500],
-                      height: 1.4,
-                    ),
+                Container(
+                  margin: const EdgeInsets.only(top: 9),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 11,
+                    vertical: 9,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2E8E4)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 1),
+                        child: Icon(
+                          Icons.info_outline_rounded,
+                          size: 15,
+                          color: _teal,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Maksimal transfer ${formatRupiah((widget.dari.saldo - minimal).clamp(0, widget.dari.saldo))}. '
+                          'Saldo minimum ${formatRupiah(minimal)} tetap disisakan.',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: Color(0xFF64748B),
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               const SizedBox(height: 28),

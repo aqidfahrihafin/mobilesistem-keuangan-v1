@@ -75,7 +75,10 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorMessage = null;
     });
 
-    final result = await context.read<AuthService>().loginWithBiometrics();
+    final auth = context.read<AuthService>();
+    final result = auth.isLoggedIn
+        ? await auth.unlockWithBiometrics()
+        : await auth.loginWithBiometrics();
     if (!mounted) return;
 
     switch (result) {
@@ -312,7 +315,9 @@ class _QuickLoginButton extends StatelessWidget {
           : Icon(icon, size: 21),
       label: Text(label),
       style: OutlinedButton.styleFrom(
-        minimumSize: const Size(128, 46),
+        minimumSize: const Size(112, 44),
+        padding: const EdgeInsets.symmetric(horizontal: 13),
+        textStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
         backgroundColor: Colors.white,
       ),
     );

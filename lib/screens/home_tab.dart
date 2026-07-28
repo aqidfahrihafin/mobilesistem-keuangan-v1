@@ -22,6 +22,7 @@ import '../widgets/geometric_pattern.dart';
 import '../widgets/skeleton.dart';
 import '../widgets/transaksi_list_item.dart';
 import 'all_services_screen.dart';
+import 'santri_profile_screen.dart';
 import 'scan_bayar_screen.dart';
 import 'topup_tab.dart';
 import 'transaksi_detail_screen.dart';
@@ -939,7 +940,7 @@ class _StatTile extends StatelessWidget {
   }
 }
 
-/// Four primary entry points below the balance card. Less frequently used
+/// Five primary entry points below the balance card. Less frequently used
 /// features live in a grouped "Semua Layanan" page so this row stays clear
 /// as the application grows.
 /// existing screen exactly like their other entry points elsewhere (the
@@ -956,8 +957,8 @@ class _QuickActionsRow extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           const gap = 6.0;
-          final raw = (constraints.maxWidth - gap * 3) / 4;
-          final size = raw.clamp(42.0, 50.0);
+          final raw = (constraints.maxWidth - gap * 4) / 5;
+          final size = raw.clamp(38.0, 46.0);
 
           return Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -989,6 +990,17 @@ class _QuickActionsRow extends StatelessWidget {
                 color: const Color(0xFF8B4BE8),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const ScanBayarScreen()),
+                ),
+              ),
+              _QuickActionButton(
+                size: size,
+                icon: Icons.badge_rounded,
+                label: 'Profil',
+                color: const Color(0xFFE23483),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const SantriProfileScreen(),
+                  ),
                 ),
               ),
               _QuickActionButton(
@@ -1061,7 +1073,7 @@ class _QuickActionButton extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 11.5,
+                    fontSize: 10.5,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

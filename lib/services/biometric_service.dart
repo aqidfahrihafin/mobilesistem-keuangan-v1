@@ -11,7 +11,7 @@ enum BiometricAuthResult {
 }
 
 /// The only file in the app that talks to `local_auth` directly - every
-/// other file (AuthService, BiometricUnlockScreen, ProfilTab's toggle) goes
+/// other file (AuthService, login quick action, ProfilTab's toggle) goes
 /// through this instead. `local_auth` is Pigeon-based, not a plain
 /// MethodChannel, so it can't be mocked the lightweight way
 /// flutter_secure_storage is mocked in widget_test.dart; keeping it behind
@@ -52,7 +52,9 @@ class BiometricService {
         ),
       );
 
-      return ok ? BiometricAuthResult.success : BiometricAuthResult.failedOrCancelled;
+      return ok
+          ? BiometricAuthResult.success
+          : BiometricAuthResult.failedOrCancelled;
     } on PlatformException catch (e) {
       switch (e.code) {
         case auth_error.notEnrolled:

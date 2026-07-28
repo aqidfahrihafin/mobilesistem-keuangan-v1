@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../services/auth_service.dart';
+import '../services/api_client.dart';
 import '../services/biometric_service.dart';
+import '../services/wali_api.dart';
 import '../theme/app_theme.dart';
 import '../widgets/confirm_dialog.dart';
 import '../widgets/flat_card.dart';
@@ -360,6 +362,19 @@ class _BiometricToggleTileState extends State<_BiometricToggleTile> {
         );
       }
     } else {
+      final verified = await showDialog<bool>(
+        context: context,
+        builder: (_) => const _PasswordConfirmationDialog(
+          title: 'Matikan sidik jari',
+          description:
+              'Masukkan kata sandi akun untuk menonaktifkan login sidik jari.',
+          confirmText: 'Verifikasi & Matikan',
+        ),
+      );
+      if (verified != true || !mounted) {
+        if (mounted) setState(() => _busy = false);
+        return;
+      }
       await auth.setBiometricEnabled(false);
     }
 
@@ -380,6 +395,118 @@ class _BiometricToggleTileState extends State<_BiometricToggleTile> {
           label: 'Login dengan Sidik Jari',
           value: enabled,
           onChanged: _busy ? null : _onChanged,
+        ),
+      ],
+    );
+  }
+}
+
+class _PasswordConfirmationDialog extends StatefulWidget {
+  final String title;
+  final String description;
+  final String confirmText;
+
+  const _PasswordConfirmationDialog({
+    required this.title,
+    required this.description,
+    required this.confirmText,
+  });
+
+  @override
+  State<_PasswordConfirmationDialog> createState() =>
+      _PasswordConfirmationDialogState();
+}
+
+class _PasswordConfirmationDialogState
+    extends State<_PasswordConfirmationDialog> {
+  final _controller = TextEditingController();
+  bool _loading = false;
+  bool _obscure = true;
+  String? _error;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _verify() async {
+    if (_controller.text.isEmpty || _loading) {
+      setState(() => _error = 'Kata sandi wajib diisi.');
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      await context.read<WaliApi>().confirmPassword(_controller.text);
+      if (mounted) Navigator.pop(context, true);
+    } on ApiException catch (error) {
+      if (mounted) {
+        setState(() => _error = error.errorFor('password') ?? error.message);
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.title),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            widget.description,
+            style: const TextStyle(
+              color: Color(0xFF64748B),
+              fontSize: 12.5,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            obscureText: _obscure,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _verify(),
+            decoration: InputDecoration(
+              hintText: 'Kata sandi',
+              errorText: _error,
+              prefixIcon: const Icon(Icons.lock_outline_rounded),
+              suffixIcon: IconButton(
+                onPressed: () => setState(() => _obscure = !_obscure),
+                icon: Icon(
+                  _obscure
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _loading ? null : () => Navigator.pop(context, false),
+          child: const Text('Batal'),
+        ),
+        FilledButton(
+          onPressed: _loading ? null : _verify,
+          child: _loading
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Text(widget.confirmText),
         ),
       ],
     );

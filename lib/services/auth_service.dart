@@ -122,6 +122,8 @@ class AuthService extends ChangeNotifier {
 
     _token = data['token'] as String;
     _user = WaliUser.fromJson(data['user'] as Map<String, dynamic>);
+    _needsPinUnlock = false;
+    _needsBiometricUnlock = false;
     await _storage.write(key: 'token', value: _token);
     _api.setToken(_token);
     unawaited(_push.registerCurrentToken());
@@ -155,6 +157,18 @@ class AuthService extends ChangeNotifier {
   Future<void> disableLoginPin() async {
     _loginPin = null;
     _needsPinUnlock = false;
+    await _storage.delete(key: _loginPinKey);
+    notifyListeners();
+  }
+
+  /// Removes the local PIN and returns to the regular credential screen
+  /// without revoking the retained session. Biometric quick login remains
+  /// available when enabled.
+  Future<void> usePasswordInsteadOfPin() async {
+    _loginPin = null;
+    _needsPinUnlock = false;
+    _needsBiometricUnlock = false;
+    _user = null;
     await _storage.delete(key: _loginPinKey);
     notifyListeners();
   }

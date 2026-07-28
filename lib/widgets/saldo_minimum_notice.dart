@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../utils/formatters.dart';
 
-const _amberBg = Color(0xFFFFF7E6);
-const _amberBorder = Color(0xFFFBE8C6);
-const _amberIconBg = Color(0xFFFDECC8);
-const _amberFg = Color(0xFF9A6700);
+const _surface = Color(0xFFFFFFFF);
+const _border = Color(0xFFDCE9E7);
+const _iconBg = Color(0xFFEAF5F3);
+const _teal = Color(0xFF0F766E);
+const _ink = Color(0xFF334155);
 
 /// A single, self-contained "can't proceed - saldo is at the floor" status
 /// card - shared by TransferSaldoScreen and ScanBayarScreen so a blocked
@@ -32,36 +33,50 @@ class SaldoMinimumNotice extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: _amberBg,
+        color: _surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _amberBorder),
+        border: Border.all(color: _border),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(color: _amberIconBg, shape: BoxShape.circle),
+            width: 34,
+            height: 34,
+            decoration: const BoxDecoration(
+              color: _iconBg,
+              shape: BoxShape.circle,
+            ),
             alignment: Alignment.center,
-            child: const Icon(Icons.savings_rounded, color: _amberFg, size: 20),
+            child: const Icon(
+              Icons.account_balance_wallet_outlined,
+              color: _teal,
+              size: 17,
+            ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Saldo di Batas Minimum',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: _amberFg),
+                  'Batas saldo tercapai',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.5,
+                    color: Color(0xFF17212B),
+                  ),
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'Saldo $namaSantri sudah di batas minimum ${formatRupiah(minimal)} - '
-                  'belum bisa $aksi sampai saldo di atas batas ini.',
-                  style: const TextStyle(color: _amberFg, fontSize: 12.5, height: 1.4),
+                  '$namaSantri belum dapat $aksi. Saldo minimum yang harus disisakan ${formatRupiah(minimal)}.',
+                  style: const TextStyle(
+                    color: _ink,
+                    fontSize: 11.5,
+                    height: 1.35,
+                  ),
                 ),
               ],
             ),

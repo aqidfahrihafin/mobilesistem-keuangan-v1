@@ -257,7 +257,9 @@ String? _subtitleFor(Transaksi t) {
   final referensi = t.referensi;
   if (referensi != null) {
     if (referensi.isUnitUsaha) return referensi.nama;
-    if (referensi.isSantri) return '${t.isKredit ? 'Dari' : 'Ke'} ${referensi.nama}';
+    if (referensi.isSantri) {
+      return '${t.isKredit ? 'Dari' : 'Ke'} ${referensi.nama}';
+    }
   }
 
   final tagihan = t.tagihan;

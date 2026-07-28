@@ -24,14 +24,9 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
   String? _error;
   bool _busy = false;
   int _attempts = 0;
-  DateTime? _lockedUntil;
 
   Future<void> _digit(String digit) async {
     if (_busy || _pin.length == 6) return;
-    if (_lockedUntil?.isAfter(DateTime.now()) == true) {
-      setState(() => _error = 'Tunggu 30 detik sebelum mencoba kembali.');
-      return;
-    }
     HapticFeedback.selectionClick();
     setState(() {
       _pin += digit;
@@ -67,9 +62,12 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
 
     _attempts++;
     if (_attempts >= 5) {
-      _attempts = 0;
-      _lockedUntil = DateTime.now().add(const Duration(seconds: 30));
-      _error = 'Terlalu banyak percobaan. Coba lagi dalam 30 detik.';
+      await auth.usePasswordInsteadOfPin();
+      if (!mounted) return;
+      if (widget.presentedAsRoute && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+      return;
     } else {
       _error = 'PIN salah. Tersisa ${5 - _attempts} percobaan.';
     }
@@ -106,8 +104,8 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
     });
   }
 
-  Future<void> _forgotPin() async {
-    await context.read<AuthService>().switchAccount();
+  Future<void> _usePassword() async {
+    await context.read<AuthService>().usePasswordInsteadOfPin();
     if (!mounted) return;
     if (widget.presentedAsRoute && Navigator.canPop(context)) {
       Navigator.pop(context);
@@ -198,38 +196,55 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                                 ),
                         ),
                       ),
-                      _NumberPad(
-                        onDigit: _digit,
-                        onDelete: _delete,
-                        onBiometric: canUseBiometric ? _biometric : null,
-                        busy: _busy,
-                      ),
-                      const SizedBox(height: 22),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Row(
-                            children: [
-                              Icon(
-                                Icons.shield_outlined,
-                                size: 16,
-                                color: _teal,
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 320),
+                        child: Column(
+                          children: [
+                            _NumberPad(
+                              onDigit: _digit,
+                              onDelete: _delete,
+                              onBiometric: canUseBiometric ? _biometric : null,
+                              busy: _busy,
+                            ),
+                            const SizedBox(height: 20),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Row(
+                                    children: [
+                                      Icon(
+                                        Icons.shield_outlined,
+                                        size: 16,
+                                        color: _teal,
+                                      ),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        'PIN terlindungi',
+                                        style: TextStyle(
+                                          fontSize: 11.5,
+                                          color: Color(0xFF7A869A),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  TextButton(
+                                    onPressed: _busy ? null : _usePassword,
+                                    style: TextButton.styleFrom(
+                                      minimumSize: const Size(0, 36),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                      ),
+                                    ),
+                                    child: const Text('Gunakan Password'),
+                                  ),
+                                ],
                               ),
-                              SizedBox(width: 6),
-                              Text(
-                                'PIN terlindungi',
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  color: Color(0xFF7A869A),
-                                ),
-                              ),
-                            ],
-                          ),
-                          TextButton(
-                            onPressed: _busy ? null : _forgotPin,
-                            child: const Text('Lupa PIN?'),
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -258,7 +273,7 @@ class _NumberPad extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final keys = <Widget>[
+    final keys = <_PadButton>[
       for (final digit in ['1', '2', '3', '4', '5', '6', '7', '8', '9'])
         _PadButton(label: digit, onTap: () => onDigit(digit)),
       _PadButton(
@@ -272,14 +287,17 @@ class _NumberPad extends StatelessWidget {
 
     return AbsorbPointer(
       absorbing: busy,
-      child: GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 3,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 34,
-        childAspectRatio: 1,
-        children: keys,
+      child: Column(
+        children: List.generate(4, (rowIndex) {
+          final start = rowIndex * 3;
+          return Padding(
+            padding: EdgeInsets.only(bottom: rowIndex == 3 ? 0 : 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: keys.sublist(start, start + 3),
+            ),
+          );
+        }),
       ),
     );
   }
@@ -300,29 +318,33 @@ class _PadButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: highlighted && onTap != null
-          ? const Color(0xFFEAF8F6)
-          : Colors.white,
-      shape: CircleBorder(
-        side: BorderSide(
-          color: onTap == null ? Colors.transparent : const Color(0xFFE3E7ED),
+    return SizedBox(
+      width: 72,
+      height: 72,
+      child: Material(
+        color: highlighted && onTap != null
+            ? const Color(0xFFEAF8F6)
+            : Colors.white,
+        shape: CircleBorder(
+          side: BorderSide(
+            color: onTap == null ? Colors.transparent : const Color(0xFFE3E7ED),
+          ),
         ),
-      ),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: Center(
-          child: icon != null
-              ? Icon(icon, color: _teal, size: 26)
-              : Text(
-                  label!,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    color: _ink,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: Center(
+            child: icon != null
+                ? Icon(icon, color: _teal, size: 25)
+                : Text(
+                    label!,
+                    style: const TextStyle(
+                      fontSize: 23,
+                      fontWeight: FontWeight.w600,
+                      color: _ink,
+                    ),
                   ),
-                ),
+          ),
         ),
       ),
     );
