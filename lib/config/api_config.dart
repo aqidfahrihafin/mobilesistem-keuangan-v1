@@ -32,7 +32,7 @@ class ApiConfig {
   static const String _override = String.fromEnvironment('API_BASE_URL');
 
   /// URL server produksi (hosting).
-  static const String _prodUrl = 'https://emall.ecometer.my.id/api';
+  static const String _prodUrl = 'https://emall.apinsdigital.my.id/api';
 
   /// Mengembalikan Base URL API sesuai kondisi aplikasi.
   static String get baseUrl {

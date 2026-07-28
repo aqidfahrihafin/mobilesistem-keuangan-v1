@@ -88,7 +88,7 @@ web (login & kata sandi awalnya sama-sama No. KK keluarga tsb).
   dinamis dari `GET /api/wali/app-info`.
 - Kwitansi resmi diunduh dan ditampilkan lewat preview PDF di dalam aplikasi;
   pengguna tidak dialihkan ke browser saat membuka kwitansi.
-- Build release default mengarah ke `https://emall.ecometer.my.id/api` dan
+- Build release default mengarah ke `https://emall.apinsdigital.my.id/api` dan
   tetap dapat dioverride melalui `--dart-define=API_BASE_URL=...`.
 
 ## Design system
