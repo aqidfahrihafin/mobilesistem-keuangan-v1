@@ -7,6 +7,7 @@ import 'change_password_screen.dart';
 import 'login_screen.dart';
 import 'main_screen.dart';
 import 'onboarding_screen.dart';
+import 'pin_login_screen.dart';
 import 'splash_screen.dart';
 
 /// Root of the widget tree, below MaterialApp: decides which screen to show
@@ -55,6 +56,10 @@ class _AuthGateState extends State<AuthGate> {
         // Checked before mustChangePassword - a soft-locked wali who also
         // happens to need a password change should see the lock screen
         // first, not skip straight past it.
+        if (auth.needsPinUnlock) {
+          return const PinLoginScreen();
+        }
+
         if (auth.needsBiometricUnlock) {
           return const BiometricUnlockScreen();
         }

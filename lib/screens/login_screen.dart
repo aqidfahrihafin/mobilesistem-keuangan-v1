@@ -5,9 +5,8 @@ import '../providers/tab_index_provider.dart';
 import '../services/api_client.dart';
 import '../services/auth_service.dart';
 import '../services/biometric_service.dart';
-import '../widgets/auth_brand_header.dart';
-
-const _teal = Color(0xFF0F766E);
+import '../widgets/app_logo_image.dart';
+import 'pin_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -58,9 +57,11 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text,
       );
       if (mounted) context.read<TabIndexProvider>().go(0);
-    } on ApiException catch (e) {
+    } on ApiException catch (error) {
       if (mounted) {
-        setState(() => _errorMessage = e.errorFor('login') ?? e.message);
+        setState(
+          () => _errorMessage = error.errorFor('login') ?? error.message,
+        );
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -102,187 +103,217 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final canUseBiometric = context.watch<AuthService>().canUseBiometricLogin;
+    final auth = context.watch<AuthService>();
+    final canUseBiometric = auth.canUseBiometricLogin;
+    final canUsePin = auth.canUsePinLogin;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 40,
-                ),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const AuthBrandHeader(),
-                      const SizedBox(height: 30),
-                      const Text(
-                        'Selamat datang',
-                        style: TextStyle(
-                          color: Color(0xFF0F172A),
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
+          builder: (context, constraints) => SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight - 40,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Center(
+                          child: SizedBox(
+                            width: 78,
+                            height: 78,
+                            child: AppLogoImage(),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Gunakan akun wali Anda.',
-                        style: TextStyle(
-                          color: Color(0xFF64748B),
-                          fontSize: 13,
+                        const SizedBox(height: 26),
+                        const Text(
+                          'Selamat datang kembali',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFF13213A),
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 22),
-                      if (_serverStatus == ServerStatus.maintenance ||
-                          _serverStatus == ServerStatus.unreachable) ...[
-                        _ServerStatusBanner(
-                          status: _serverStatus!,
-                          onRetry: _checkServerStatus,
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Masuk untuk melanjutkan aktivitas Anda',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFF7A869A),
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        if (_serverStatus == ServerStatus.maintenance ||
+                            _serverStatus == ServerStatus.unreachable) ...[
+                          _ServerStatusBanner(
+                            status: _serverStatus!,
+                            onRetry: _checkServerStatus,
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                        if (_errorMessage != null) ...[
+                          _ErrorBanner(message: _errorMessage!),
+                          const SizedBox(height: 12),
+                        ],
+                        TextFormField(
+                          controller: _loginController,
+                          autocorrect: false,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(
+                            hintText: 'Email atau No. KK',
+                            prefixIcon: Icon(Icons.person_outline_rounded),
+                          ),
+                          validator: (value) =>
+                              value == null || value.trim().isEmpty
+                              ? 'Email atau No. KK wajib diisi'
+                              : null,
                         ),
                         const SizedBox(height: 14),
-                      ],
-                      if (_errorMessage != null) ...[
-                        _ErrorBanner(message: _errorMessage!),
-                        const SizedBox(height: 14),
-                      ],
-                      const _FieldLabel('Email atau No. KK'),
-                      TextFormField(
-                        controller: _loginController,
-                        autocorrect: false,
-                        textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          hintText: 'Masukkan email atau No. KK',
-                          prefixIcon: Icon(
-                            Icons.person_outline_rounded,
-                            size: 21,
-                          ),
-                        ),
-                        validator: (value) =>
-                            value == null || value.trim().isEmpty
-                            ? 'Wajib diisi'
-                            : null,
-                      ),
-                      const SizedBox(height: 14),
-                      const _FieldLabel('Kata Sandi'),
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: _obscurePassword,
-                        textInputAction: TextInputAction.done,
-                        decoration: InputDecoration(
-                          hintText: '••••••••',
-                          prefixIcon: const Icon(
-                            Icons.lock_outline_rounded,
-                            size: 21,
-                          ),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined,
-                              color: _teal,
-                              size: 21,
-                            ),
-                            onPressed: () => setState(
-                              () => _obscurePassword = !_obscurePassword,
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          textInputAction: TextInputAction.done,
+                          decoration: InputDecoration(
+                            hintText: 'Kata sandi',
+                            prefixIcon: const Icon(Icons.lock_outline_rounded),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                size: 21,
+                              ),
+                              onPressed: () => setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
                             ),
                           ),
+                          validator: (value) => value == null || value.isEmpty
+                              ? 'Kata sandi wajib diisi'
+                              : null,
+                          onFieldSubmitted: (_) => _submit(),
                         ),
-                        validator: (value) => value == null || value.isEmpty
-                            ? 'Wajib diisi'
-                            : null,
-                        onFieldSubmitted: (_) => _submit(),
-                      ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        height: 48,
-                        child: FilledButton.icon(
-                          onPressed: _loading ? null : _submit,
-                          icon: _loading
-                              ? const SizedBox(
-                                  width: 19,
-                                  height: 19,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Icon(
-                                  Icons.arrow_forward_rounded,
-                                  size: 19,
-                                ),
-                          label: Text(
-                            _loading ? 'Memproses...' : 'Masuk',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (canUseBiometric) ...[
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 20),
                         SizedBox(
-                          height: 48,
-                          child: OutlinedButton.icon(
-                            onPressed: _biometricLoading
-                                ? null
-                                : _submitWithBiometrics,
-                            icon: _biometricLoading
+                          height: 50,
+                          child: FilledButton(
+                            onPressed: _loading ? null : _submit,
+                            child: _loading
                                 ? const SizedBox(
                                     width: 19,
                                     height: 19,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: _teal,
+                                      color: Colors.white,
                                     ),
                                   )
-                                : const Icon(
-                                    Icons.fingerprint_rounded,
-                                    size: 22,
+                                : const Text(
+                                    'Masuk',
+                                    style: TextStyle(
+                                      fontSize: 14.5,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
-                            label: const Text(
-                              'Sidik Jari',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
                           ),
                         ),
+                        if (canUsePin || canUseBiometric) ...[
+                          const SizedBox(height: 22),
+                          const Row(
+                            children: [
+                              Expanded(child: Divider()),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 12),
+                                child: Text(
+                                  'Masuk cepat',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    color: Color(0xFF7A869A),
+                                  ),
+                                ),
+                              ),
+                              Expanded(child: Divider()),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (canUsePin)
+                                _QuickLoginButton(
+                                  icon: Icons.pin_outlined,
+                                  label: 'PIN',
+                                  onTap: () => Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const PinLoginScreen(
+                                        presentedAsRoute: true,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              if (canUsePin && canUseBiometric)
+                                const SizedBox(width: 14),
+                              if (canUseBiometric)
+                                _QuickLoginButton(
+                                  icon: Icons.fingerprint_rounded,
+                                  label: 'Sidik Jari',
+                                  loading: _biometricLoading,
+                                  onTap: _submitWithBiometrics,
+                                ),
+                            ],
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
-            );
-          },
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-class _FieldLabel extends StatelessWidget {
-  final String text;
-  const _FieldLabel(this.text);
+class _QuickLoginButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool loading;
+
+  const _QuickLoginButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.loading = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 7, left: 1),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Color(0xFF0F172A),
-          fontSize: 12.5,
-          fontWeight: FontWeight.w700,
-        ),
+    return OutlinedButton.icon(
+      onPressed: loading ? null : onTap,
+      icon: loading
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Icon(icon, size: 21),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(128, 46),
+        backgroundColor: Colors.white,
       ),
     );
   }
@@ -290,6 +321,7 @@ class _FieldLabel extends StatelessWidget {
 
 class _ErrorBanner extends StatelessWidget {
   final String message;
+
   const _ErrorBanner({required this.message});
 
   @override
@@ -313,6 +345,7 @@ class _ErrorBanner extends StatelessWidget {
 class _ServerStatusBanner extends StatelessWidget {
   final ServerStatus status;
   final VoidCallback onRetry;
+
   const _ServerStatusBanner({required this.status, required this.onRetry});
 
   @override

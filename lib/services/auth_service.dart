@@ -22,12 +22,14 @@ class AuthService extends ChangeNotifier {
   final _storage = const FlutterSecureStorage();
 
   static const _biometricEnabledKey = 'biometric_enabled';
+  static const _loginPinKey = 'login_pin';
   static const _onboardedKey = 'has_onboarded';
 
   WaliUser? _user;
   String? _token;
   bool _restoring = true;
   bool _biometricEnabled = false;
+  String? _loginPin;
   bool _hasOnboarded = false;
 
   /// True whenever the session is otherwise valid but still needs a
@@ -35,6 +37,7 @@ class AuthService extends ChangeNotifier {
   /// biometricEnabled) and again whenever SessionActivityGuard locks the
   /// app for inactivity. Cleared by a successful unlockWithBiometrics().
   bool _needsBiometricUnlock = false;
+  bool _needsPinUnlock = false;
 
   AuthService(this._api, this._biometric, this._push);
 
@@ -44,6 +47,8 @@ class AuthService extends ChangeNotifier {
   bool get restoring => _restoring;
   bool get biometricEnabled => _biometricEnabled;
   bool get needsBiometricUnlock => _needsBiometricUnlock;
+  bool get needsPinUnlock => _needsPinUnlock;
+  bool get loginPinEnabled => _loginPin != null;
   bool get hasOnboarded => _hasOnboarded;
 
   /// True when there's a retained token a fingerprint tap on the login
@@ -52,6 +57,7 @@ class AuthService extends ChangeNotifier {
   /// fresh install or after a hard sign-out, so the button only ever
   /// appears when it can actually do something.
   bool get canUseBiometricLogin => _biometricEnabled && _token != null;
+  bool get canUsePinLogin => _loginPin != null && _token != null;
 
   /// Call once at app startup - tries to resume a previous session from
   /// secure storage before showing the login screen.
@@ -60,6 +66,7 @@ class AuthService extends ChangeNotifier {
       _token = await _storage.read(key: 'token');
       _biometricEnabled =
           await _storage.read(key: _biometricEnabledKey) == 'true';
+      _loginPin = await _storage.read(key: _loginPinKey);
       _hasOnboarded = await _storage.read(key: _onboardedKey) == 'true';
 
       if (_token != null) {
@@ -67,7 +74,8 @@ class AuthService extends ChangeNotifier {
         try {
           final data = await _api.get('/wali/me');
           _user = WaliUser.fromJson(data as Map<String, dynamic>);
-          _needsBiometricUnlock = _biometricEnabled;
+          _needsPinUnlock = _loginPin != null;
+          _needsBiometricUnlock = _biometricEnabled && _loginPin == null;
           unawaited(_push.registerCurrentToken());
         } catch (_) {
           // Token expired/revoked or the server is unreachable. Never leave
@@ -89,6 +97,7 @@ class AuthService extends ChangeNotifier {
       _token = null;
       _user = null;
       _needsBiometricUnlock = false;
+      _needsPinUnlock = false;
       _api.setToken(null);
       debugPrint('Session restoration skipped: $error');
       debugPrintStack(stackTrace: stackTrace);
@@ -134,11 +143,36 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setLoginPin(String pin) async {
+    if (!RegExp(r'^\d{6}$').hasMatch(pin)) {
+      throw ArgumentError('PIN login harus terdiri dari 6 angka.');
+    }
+    _loginPin = pin;
+    await _storage.write(key: _loginPinKey, value: pin);
+    notifyListeners();
+  }
+
+  Future<void> disableLoginPin() async {
+    _loginPin = null;
+    _needsPinUnlock = false;
+    await _storage.delete(key: _loginPinKey);
+    notifyListeners();
+  }
+
+  bool unlockWithPin(String pin) {
+    if (_loginPin == null || pin != _loginPin) return false;
+    _needsPinUnlock = false;
+    _needsBiometricUnlock = false;
+    notifyListeners();
+    return true;
+  }
+
   Future<BiometricAuthResult> unlockWithBiometrics() async {
     final result = await _biometric.authenticate();
 
     if (result == BiometricAuthResult.success) {
       _needsBiometricUnlock = false;
+      _needsPinUnlock = false;
       notifyListeners();
     }
 
@@ -171,6 +205,25 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  Future<bool> loginWithPin(String pin) async {
+    if (_loginPin == null || pin != _loginPin || _token == null) return false;
+
+    _api.setToken(_token);
+    try {
+      final data = await _api.get('/wali/me');
+      _user = WaliUser.fromJson(data as Map<String, dynamic>);
+      _needsPinUnlock = false;
+      _needsBiometricUnlock = false;
+      unawaited(_push.registerCurrentToken());
+      notifyListeners();
+      return true;
+    } catch (_) {
+      await _clearSession();
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Called by SessionActivityGuard after enough inactivity has passed.
   /// Soft-locks (keeps the token, just re-shows the biometric gate) when
   /// biometrics are enabled - forcing a full network re-login every idle
@@ -180,8 +233,9 @@ class AuthService extends ChangeNotifier {
   Future<void> lockForInactivity() async {
     if (!isLoggedIn) return;
 
-    if (_biometricEnabled) {
-      _needsBiometricUnlock = true;
+    if (_loginPin != null || _biometricEnabled) {
+      _needsPinUnlock = _loginPin != null;
+      _needsBiometricUnlock = _biometricEnabled && _loginPin == null;
       notifyListeners();
     } else {
       await logout();
@@ -234,9 +288,10 @@ class AuthService extends ChangeNotifier {
   /// biometric login off (or a token that turns out to be dead) always
   /// falls through to a real sign-out that revokes the server session.
   Future<void> logout() async {
-    if (_biometricEnabled && _token != null) {
+    if ((_biometricEnabled || _loginPin != null) && _token != null) {
       _user = null;
       _needsBiometricUnlock = false;
+      _needsPinUnlock = false;
       notifyListeners();
       return;
     }
@@ -254,6 +309,7 @@ class AuthService extends ChangeNotifier {
   /// the previous wali's biometric consent instead of opting in themselves.
   Future<void> switchAccount() async {
     await setBiometricEnabled(false);
+    await disableLoginPin();
     await _hardLogout();
     notifyListeners();
   }
@@ -277,8 +333,11 @@ class AuthService extends ChangeNotifier {
     _token = null;
     _user = null;
     _needsBiometricUnlock = false;
+    _needsPinUnlock = false;
     _api.setToken(null);
     await _storage.delete(key: 'token');
+    await _storage.delete(key: _loginPinKey);
+    _loginPin = null;
   }
 
   String _deviceName() {

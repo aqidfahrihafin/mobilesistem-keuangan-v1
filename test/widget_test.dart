@@ -67,7 +67,7 @@ void main() {
       await tester.tap(find.text('Lewati'));
       await tester.pumpAndSettle();
 
-      expect(find.text('E-Mall Annuqayah'), findsOneWidget);
+      expect(find.text('Selamat datang kembali'), findsOneWidget);
       expect(find.text('Masuk'), findsOneWidget);
     },
   );

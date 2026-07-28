@@ -42,6 +42,10 @@ web (login & kata sandi awalnya sama-sama No. KK keluarga tsb).
 
 - Login (email atau No. KK) & logout, sesi tersimpan aman di perangkat
   (`flutter_secure_storage`), otomatis login lagi saat app dibuka ulang.
+- Login cepat opsional dengan PIN lokal 6 digit dan/atau sidik jari setelah
+  pengguna pernah berhasil masuk memakai username dan kata sandi. PIN login
+  hanya membuka sesi tersimpan pada perangkat, bukan autentikasi baru ke server,
+  dan berbeda dari PIN transaksi.
 - Alur wajib ganti kata sandi untuk akun yang dibuat otomatis dengan No. KK
   sebagai kata sandi awal (mengikuti `must_change_password` dari API), plus
   ganti kata sandi sukarela dari tab Profil.
@@ -106,7 +110,7 @@ lib/
     tab_index_provider.dart    Index tab bottom-nav aktif (dipakai lintas tab, mis. tombol "Lihat Semua")
   services/
     api_client.dart            HTTP wrapper + ApiException (format error Laravel)
-    auth_service.dart          Sesi: login/logout/ganti-password, token di secure storage
+    auth_service.dart          Sesi, PIN login lokal, biometrik, dan token di secure storage
     wali_api.dart               Panggilan ke endpoint anak/saldo/tagihan/transaksi/topup
   utils/
     metode_topup.dart           Metadata 4 metode top up (label/ikon/tutorial "Cara Bayar") - satu sumber dipakai selector & tutorial
@@ -117,6 +121,8 @@ lib/
   screens/
     auth_gate.dart               Penentu layar awal (splash/login/ganti-password/main)
     login_screen.dart
+    pin_login_screen.dart        Keypad PIN lokal + opsi sidik jari
+    login_pin_setup_screen.dart  Aktivasi/ubah/nonaktifkan PIN login
     change_password_screen.dart
     main_screen.dart             Shell bottom-nav (4 tab + tombol Top Up docked di tengah)
     home_tab.dart                Tab Beranda

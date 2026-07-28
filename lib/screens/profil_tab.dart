@@ -11,6 +11,7 @@ import 'change_password_screen.dart';
 import 'edit_profile_screen.dart';
 import 'faq_screen.dart';
 import 'pin_setup_screen.dart';
+import 'login_pin_setup_screen.dart';
 import 'version_screen.dart';
 
 const _bg = Colors.transparent;
@@ -154,6 +155,18 @@ class ProfilTab extends StatelessWidget {
                     MaterialPageRoute(builder: (_) => const PinSetupScreen()),
                   ),
                 ),
+                const Divider(height: 1, color: Color(0xFFE9EBEF)),
+                _MenuTile(
+                  icon: Icons.lock_person_outlined,
+                  label: context.watch<AuthService>().loginPinEnabled
+                      ? 'Ubah PIN Login'
+                      : 'Aktifkan PIN Login',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const LoginPinSetupScreen(),
+                    ),
+                  ),
+                ),
                 // Owns its own leading divider (only rendered alongside
                 // the tile itself) so nothing collapses into a stray
                 // double divider when the device has no biometric
@@ -234,15 +247,16 @@ class ProfilTab extends StatelessWidget {
     // valid so the fingerprint button on the login screen can resume the
     // session) rather than fully signing out - worth being upfront about
     // since it's a real change from a plain "you're signed out" logout.
-    final biometricEnabled = context.read<AuthService>().biometricEnabled;
+    final auth = context.read<AuthService>();
+    final quickLoginEnabled = auth.biometricEnabled || auth.loginPinEnabled;
 
     final confirmed = await ConfirmDialog.show(
       context,
       icon: Icons.logout_rounded,
       iconColor: Colors.red[600]!,
       title: 'Keluar dari akun?',
-      message: biometricEnabled
-          ? 'Sesi akan dikunci. Gunakan sidik jari untuk masuk kembali dengan cepat, atau masuk ulang dengan kata sandi.'
+      message: quickLoginEnabled
+          ? 'Sesi akan dikunci. Gunakan PIN atau sidik jari yang aktif untuk masuk kembali, atau masuk ulang dengan kata sandi.'
           : 'Anda perlu masuk kembali untuk mengakses saldo dan tagihan.',
       confirmText: 'Ya, Keluar',
       confirmColor: Colors.red[600]!,
