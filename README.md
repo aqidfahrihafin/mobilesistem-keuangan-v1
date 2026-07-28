@@ -71,11 +71,15 @@ web (login & kata sandi awalnya sama-sama No. KK keluarga tsb).
   ada callback otomatis. (Endpoint Snap lama, `POST /anak/{santri}/topup`,
   masih ada di backend tapi tidak dipakai UI mobile ini lagi.)
 
-## Yang belum ada (langkah berikutnya)
+## Integrasi produksi
 
-- Push notification untuk tagihan baru/top up selesai (juga belum ada di
-  API-nya).
-- Custom app icon & splash screen (masih pakai bawaan `flutter create`).
+- Push notification Firebase sudah aktif. Token perangkat didaftarkan setelah
+  login dan dihapus saat logout; notifikasi mencakup tagihan, top up, dan
+  aktivitas saldo.
+- App icon, splash, serta branding aplikasi sudah memakai aset eMall dan info
+  dinamis dari `GET /api/wali/app-info`.
+- Build release default mengarah ke `https://emall.ecometer.my.id/api` dan
+  tetap dapat dioverride melalui `--dart-define=API_BASE_URL=...`.
 
 ## Struktur
 
