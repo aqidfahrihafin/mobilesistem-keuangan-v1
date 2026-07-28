@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../models/anak.dart';
 import '../models/app_info.dart';
 import '../models/banner_item.dart';
@@ -205,12 +207,18 @@ class WaliApi {
     });
   }
 
-  /// Short-lived signed link for a kwitansi resmi's PDF (see
-  /// Api\Wali\KwitansiController) - callers just launch it externally
-  /// (url_launcher) rather than downloading bytes through this app.
-  Future<String> getKwitansiPdfUrl(int kwitansiId) async {
+  /// Fetches the official PDF through its short-lived signed URL and returns
+  /// the bytes for an in-app preview. The browser is never opened.
+  Future<({String nomor, Uint8List bytes})> getKwitansiPdf(
+    int kwitansiId,
+  ) async {
     final data = await _api.get('/wali/kwitansi/$kwitansiId');
-    return data['pdf_url'] as String;
+    final bytes = await _api.downloadBytes(data['pdf_url'] as String);
+
+    return (
+      nomor: data['nomor_kwitansi'] as String? ?? 'kwitansi-$kwitansiId',
+      bytes: bytes,
+    );
   }
 
   /// Santri sharing the same Kartu Keluarga as [santriId] - the candidate

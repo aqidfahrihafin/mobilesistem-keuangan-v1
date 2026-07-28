@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../models/anak.dart';
 import '../models/transaksi.dart';
@@ -12,6 +11,7 @@ import '../providers/anak_provider.dart';
 import '../providers/app_info_provider.dart';
 import '../services/wali_api.dart';
 import '../utils/formatters.dart';
+import 'kwitansi_preview_screen.dart';
 
 const _bg = Color(0xFFF3F8F7);
 const _teal = Color(0xFF0F766E);
@@ -161,21 +161,21 @@ class _TransaksiDetailScreenState extends State<TransaksiDetailScreen> {
   bool _sharing = false;
   bool _unduhingKwitansi = false;
 
-  /// Fetches a short-lived signed link (see Api\Wali\KwitansiController)
-  /// then just launches it externally - simpler than downloading the PDF
-  /// bytes into the app ourselves, and matches how BannerCarousel already
-  /// opens an external link with this same package.
   Future<void> _unduhKwitansi(int kwitansiId) async {
     if (_unduhingKwitansi) return;
     setState(() => _unduhingKwitansi = true);
 
     try {
       final api = context.read<WaliApi>();
-      final url = await api.getKwitansiPdfUrl(kwitansiId);
-      final uri = Uri.parse(url);
+      final pdf = await api.getKwitansiPdf(kwitansiId);
 
       if (!mounted) return;
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) =>
+              KwitansiPreviewScreen(nomor: pdf.nomor, bytes: pdf.bytes),
+        ),
+      );
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

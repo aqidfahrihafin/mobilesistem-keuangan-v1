@@ -14,9 +14,9 @@ class AuthBrandHeader extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 64,
-          height: 64,
-          padding: const EdgeInsets.all(9),
+          width: 44,
+          height: 44,
+          padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(10),
@@ -24,7 +24,7 @@ class AuthBrandHeader extends StatelessWidget {
           ),
           child: const AppLogoImage(),
         ),
-        const SizedBox(width: 14),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,20 +35,16 @@ class AuthBrandHeader extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Color(0xFF0F172A),
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.4,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 2),
               Text(
                 appInfo.namaPondok ?? 'Pondok Pesantren Annuqayah Latee',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Color(0xFF64748B),
-                  fontSize: 12.5,
-                ),
+                style: const TextStyle(color: Color(0xFF64748B), fontSize: 11),
               ),
             ],
           ),

@@ -105,15 +105,15 @@ class _LoginScreenState extends State<LoginScreen> {
     final canUseBiometric = context.watch<AuthService>().canUseBiometricLogin;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 50,
+                  minHeight: constraints.maxHeight - 40,
                 ),
                 child: Form(
                   key: _formKey,
@@ -121,14 +121,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const AuthBrandHeader(),
-                      const SizedBox(height: 42),
+                      const SizedBox(height: 30),
                       const Text(
                         'Selamat datang',
                         style: TextStyle(
                           color: Color(0xFF0F172A),
-                          fontSize: 26,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -136,10 +135,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         'Gunakan akun wali Anda.',
                         style: TextStyle(
                           color: Color(0xFF64748B),
-                          fontSize: 14,
+                          fontSize: 13,
                         ),
                       ),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 22),
                       if (_serverStatus == ServerStatus.maintenance ||
                           _serverStatus == ServerStatus.unreachable) ...[
                         _ServerStatusBanner(
@@ -199,9 +198,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             : null,
                         onFieldSubmitted: (_) => _submit(),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 20),
                       SizedBox(
-                        height: 52,
+                        height: 48,
                         child: FilledButton.icon(
                           onPressed: _loading ? null : _submit,
                           icon: _loading
@@ -220,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           label: Text(
                             _loading ? 'Memproses...' : 'Masuk',
                             style: const TextStyle(
-                              fontSize: 15.5,
+                              fontSize: 14,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -229,7 +228,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       if (canUseBiometric) ...[
                         const SizedBox(height: 12),
                         SizedBox(
-                          height: 52,
+                          height: 48,
                           child: OutlinedButton.icon(
                             onPressed: _biometricLoading
                                 ? null
@@ -248,24 +247,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                     size: 22,
                                   ),
                             label: const Text(
-                              'Masuk dengan Sidik Jari',
+                              'Sidik Jari',
                               style: TextStyle(
-                                fontSize: 15.5,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
                           ),
                         ),
                       ],
-                      const SizedBox(height: 18),
-                      Text(
-                        'Butuh bantuan? Hubungi pengurus pondok.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.grey[500],
-                          fontSize: 12.5,
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -290,7 +280,7 @@ class _FieldLabel extends StatelessWidget {
         text,
         style: const TextStyle(
           color: Color(0xFF0F172A),
-          fontSize: 13.5,
+          fontSize: 12.5,
           fontWeight: FontWeight.w700,
         ),
       ),

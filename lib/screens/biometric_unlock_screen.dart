@@ -64,84 +64,70 @@ class _BiometricUnlockScreenState extends State<BiometricUnlockScreen> {
     final nama = context.watch<AuthService>().user?.name.split(' ').first;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 50,
+                  minHeight: constraints.maxHeight - 40,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const AuthBrandHeader(),
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 32),
                     Text(
                       nama == null ? 'Buka aplikasi' : 'Halo, $nama',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: Color(0xFF0F172A),
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 6),
                     const Text(
                       'Konfirmasi sidik jari untuk melanjutkan.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
+                      style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
                     ),
-                    const SizedBox(height: 36),
+                    const SizedBox(height: 24),
                     Center(
-                      child: GestureDetector(
-                        onTap: _checking ? null : _unlock,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 220),
-                          width: 116,
-                          height: 116,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE8F5F3),
-                            shape: BoxShape.circle,
-                          ),
-                          alignment: Alignment.center,
-                          child: Container(
-                            width: 78,
-                            height: 78,
-                            decoration: BoxDecoration(
-                              color: _teal,
-                              shape: BoxShape.circle,
-                            ),
-                            alignment: Alignment.center,
-                            child: _checking
-                                ? const SizedBox(
-                                    width: 27,
-                                    height: 27,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.4,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Icon(
-                                    Icons.fingerprint_rounded,
-                                    color: Colors.white,
-                                    size: 44,
-                                  ),
-                          ),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 220),
+                        width: 72,
+                        height: 72,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFE8F5F3),
+                          shape: BoxShape.circle,
                         ),
+                        alignment: Alignment.center,
+                        child: _checking
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.2,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.fingerprint_rounded,
+                                color: _teal,
+                                size: 36,
+                              ),
                       ),
                     ),
-                    const SizedBox(height: 22),
+                    const SizedBox(height: 14),
                     Text(
                       _checking ? 'Memeriksa...' : 'Sentuh untuk masuk',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: Color(0xFF0F172A),
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     if (_error != null) ...[
@@ -176,16 +162,16 @@ class _BiometricUnlockScreenState extends State<BiometricUnlockScreen> {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     SizedBox(
-                      height: 52,
+                      height: 48,
                       child: FilledButton.icon(
                         onPressed: _checking ? null : _unlock,
                         icon: const Icon(Icons.fingerprint_rounded, size: 22),
                         label: const Text(
-                          'Verifikasi Sidik Jari',
+                          'Verifikasi',
                           style: TextStyle(
-                            fontSize: 15.5,
+                            fontSize: 14,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -193,16 +179,16 @@ class _BiometricUnlockScreenState extends State<BiometricUnlockScreen> {
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
-                      height: 52,
+                      height: 48,
                       child: OutlinedButton.icon(
                         onPressed: () => context.read<AuthService>().logout(),
                         icon: const Icon(Icons.lock_outline_rounded, size: 20),
                         label: Text(
                           _showPasswordFallback
                               ? 'Gunakan Kata Sandi'
-                              : 'Masuk dengan Kata Sandi',
+                              : 'Kata Sandi',
                           style: const TextStyle(
-                            fontSize: 15.5,
+                            fontSize: 14,
                             fontWeight: FontWeight.w700,
                           ),
                         ),

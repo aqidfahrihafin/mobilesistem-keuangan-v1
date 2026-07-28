@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -73,6 +74,31 @@ class ApiClient {
 
   Future<dynamic> delete(String path, [Map<String, dynamic>? body]) =>
       _request('DELETE', path, body);
+
+  /// Downloads a public/signed binary resource without sending the API token.
+  /// Used for short-lived kwitansi PDF URLs returned by the authenticated API.
+  Future<Uint8List> downloadBytes(String url) async {
+    try {
+      final response = await http
+          .get(Uri.parse(url), headers: {'Accept': 'application/pdf'})
+          .timeout(_requestTimeout);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return response.bodyBytes;
+      }
+
+      throw ApiException(
+        'Berkas tidak dapat diunduh. Silakan coba lagi.',
+        statusCode: response.statusCode,
+      );
+    } on SocketException {
+      throw ApiException(
+        'Tidak bisa terhubung ke server. Periksa koneksi internet Anda.',
+      );
+    } on TimeoutException {
+      throw ApiException('Unduhan terlalu lama. Silakan coba lagi.');
+    }
+  }
 
   Future<dynamic> _request(
     String method,
