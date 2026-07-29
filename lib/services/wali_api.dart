@@ -35,6 +35,12 @@ class WaliApi {
 
   Future<List<Anak>> getAnak() async {
     final data = await _api.get('/wali/anak');
+    if (data is! Map || data['data'] is! List) {
+      throw ApiException(
+        'Format data santri dari server tidak sesuai. Silakan coba lagi.',
+      );
+    }
+
     return (data['data'] as List)
         .map((e) => Anak.fromJson(e as Map<String, dynamic>))
         .toList();

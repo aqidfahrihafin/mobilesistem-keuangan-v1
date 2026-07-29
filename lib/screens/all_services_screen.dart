@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/tab_index_provider.dart';
+import '../theme/app_theme.dart';
 import 'faq_screen.dart';
 import 'login_pin_setup_screen.dart';
 import 'pin_setup_screen.dart';
@@ -10,8 +11,7 @@ import 'scan_bayar_screen.dart';
 import 'topup_tab.dart';
 import 'transfer_saldo_screen.dart';
 
-const _bg = Color(0xFFF3F8F7);
-const _teal = Color(0xFF0F766E);
+const _bg = AppColors.background;
 
 class AllServicesScreen extends StatelessWidget {
   const AllServicesScreen({super.key});
@@ -31,8 +31,8 @@ class AllServicesScreen extends StatelessWidget {
       backgroundColor: _bg,
       appBar: AppBar(
         title: const Text('Semua Layanan'),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF17212B),
+        backgroundColor: AppColors.surface,
+        foregroundColor: AppColors.ink,
         elevation: 0,
       ),
       body: SafeArea(
@@ -127,46 +127,70 @@ class _ServiceSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 2, bottom: 10),
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF17212B),
+    final theme = Theme.of(context);
+
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: AppRadius.borderRadius,
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.025),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 15, 16, 14),
+            child: Text(
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: AppColors.ink,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-        ),
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE2E8E4)),
+          const Divider(),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = constraints.maxWidth < 340 ? 3 : 4;
+
+              return GridView.builder(
+                padding: const EdgeInsets.fromLTRB(14, 16, 14, 18),
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: items.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: columns,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 16,
+                  mainAxisExtent: 104,
+                ),
+                itemBuilder: (context, index) => items[index],
+              );
+            },
           ),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: items.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
-              crossAxisSpacing: 4,
-              mainAxisSpacing: 12,
-              mainAxisExtent: 82,
-            ),
-            itemBuilder: (context, index) => items[index],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
 class _ServiceItem extends StatelessWidget {
+  static const _colors = [
+    Color(0xFF0F8F83),
+    Color(0xFF2563EB),
+    Color(0xFF8B4BE8),
+    Color(0xFFE23483),
+    Color(0xFFF59E0B),
+  ];
+
   final IconData icon;
   final String label;
   final VoidCallback? onTap;
@@ -183,6 +207,10 @@ class _ServiceItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = enabled
+        ? _colors[icon.codePoint % _colors.length]
+        : const Color(0xFF98A2B3);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -193,7 +221,7 @@ class _ServiceItem extends StatelessWidget {
                   content: Text('Layanan ini akan segera tersedia.'),
                 ),
               ),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppRadius.borderRadius,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
@@ -201,24 +229,24 @@ class _ServiceItem extends StatelessWidget {
               clipBehavior: Clip.none,
               children: [
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: double.infinity,
+                  height: 58,
                   decoration: BoxDecoration(
                     color: enabled
-                        ? _teal.withValues(alpha: 0.09)
-                        : const Color(0xFFF1F3F5),
-                    borderRadius: BorderRadius.circular(10),
+                        ? color.withValues(alpha: 0.09)
+                        : AppColors.surfaceMuted,
+                    borderRadius: AppRadius.borderRadius,
                     border: Border.all(
                       color: enabled
-                          ? _teal.withValues(alpha: 0.08)
-                          : const Color(0xFFE1E4E8),
+                          ? color.withValues(alpha: 0.13)
+                          : AppColors.border,
                     ),
                   ),
                   alignment: Alignment.center,
                   child: Icon(
                     icon,
-                    color: enabled ? _teal : const Color(0xFF98A2B3),
-                    size: 20,
+                    color: color,
+                    size: 24,
                   ),
                 ),
                 if (comingSoon)
@@ -247,7 +275,7 @@ class _ServiceItem extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               label,
               maxLines: 2,
@@ -257,9 +285,7 @@ class _ServiceItem extends StatelessWidget {
                 fontSize: 11,
                 height: 1.2,
                 fontWeight: FontWeight.w600,
-                color: enabled
-                    ? const Color(0xFF17212B)
-                    : const Color(0xFF98A2B3),
+                color: enabled ? AppColors.ink : AppColors.muted,
               ),
             ),
           ],
