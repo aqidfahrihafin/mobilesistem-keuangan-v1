@@ -15,6 +15,7 @@ import '../widgets/flat_card.dart';
 import '../widgets/santri_summary_card.dart';
 import '../widgets/success_dialog.dart';
 import '../widgets/topup_result.dart';
+import '../widgets/transaction_progress_dialog.dart';
 
 const _bg = Color(0xFFF3F8F7);
 const _teal = Color(0xFF0F766E);
@@ -113,14 +114,23 @@ class _TopupTabState extends State<TopupTab> {
 
     try {
       final nominal = int.parse(_nominalController.text.replaceAll('.', ''));
-      final topup = await context.read<WaliApi>().mulaiTopupCore(
-        santriId,
-        nominal,
-        _metode,
+      final topup = await runWithTransactionProgress(
+        context,
+        message:
+            'Sedang membuat instruksi top up. Jangan tutup aplikasi atau menekan tombol berulang kali.',
+        action: () => context.read<WaliApi>().mulaiTopupCore(
+          santriId,
+          nominal,
+          _metode,
+        ),
       );
       setState(() => _topup = topup);
     } on ApiException catch (e) {
-      setState(() => _error = e.errorFor('nominal') ?? e.message);
+      setState(
+        () => _error = e.statusCode == null
+            ? 'Instruksi top up belum dapat dipastikan karena koneksi bermasalah. Periksa riwayat sebelum membuat top up baru.'
+            : e.errorFor('nominal') ?? e.message,
+      );
     } catch (e) {
       // Anything other than ApiException (a parsing bug, a malformed server
       // response, ...) used to fail silently here - the spinner would just

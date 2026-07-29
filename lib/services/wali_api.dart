@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import '../models/anak.dart';
 import '../models/app_info.dart';
 import '../models/banner_item.dart';
+import '../models/notification_item.dart';
 import '../models/biaya_midtrans.dart';
 import '../models/tagihan.dart';
 import '../models/topup.dart';
@@ -46,6 +47,35 @@ class WaliApi {
         .toList();
   }
 
+  Future<NotificationInbox> getNotifications() async {
+    final data = await _api.get('/wali/notifications');
+    final items = data is Map && data['data'] is List
+        ? (data['data'] as List)
+              .map(
+                (item) => NotificationItem.fromJson(
+                  Map<String, dynamic>.from(item as Map),
+                ),
+              )
+              .toList()
+        : <NotificationItem>[];
+    final unread = data is Map ? data['unread_count'] : 0;
+
+    return NotificationInbox(
+      items: items,
+      unreadCount: unread is num
+          ? unread.toInt()
+          : int.tryParse(unread?.toString() ?? '') ?? 0,
+    );
+  }
+
+  Future<void> readNotification(int notificationId) async {
+    await _api.post('/wali/notifications/$notificationId/read');
+  }
+
+  Future<void> readAllNotifications() async {
+    await _api.post('/wali/notifications/read-all');
+  }
+
   Future<int> getSaldo(int santriId) async {
     final data = await _api.get('/wali/anak/$santriId/saldo');
     return (data['saldo'] as num?)?.toInt() ?? 0;
@@ -58,11 +88,28 @@ class WaliApi {
         .toList();
   }
 
+  Future<Transaksi> getTransaksiDetail(
+    int santriId,
+    int transaksiId,
+  ) async {
+    final data = await _api.get(
+      '/wali/anak/$santriId/transaksi/$transaksiId',
+    );
+    final payload = data is Map && data['data'] is Map ? data['data'] : data;
+    return Transaksi.fromJson(Map<String, dynamic>.from(payload as Map));
+  }
+
   Future<List<Tagihan>> getTagihan(int santriId) async {
     final data = await _api.get('/wali/anak/$santriId/tagihan');
     return (data['data'] as List)
         .map((e) => Tagihan.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<Tagihan> getTagihanDetail(int santriId, int tagihanId) async {
+    final data = await _api.get('/wali/anak/$santriId/tagihan/$tagihanId');
+    final payload = data is Map && data['data'] is Map ? data['data'] : data;
+    return Tagihan.fromJson(Map<String, dynamic>.from(payload as Map));
   }
 
   /// [nominal] is optional - omitted pays the full remaining sisa (same as
@@ -77,10 +124,12 @@ class WaliApi {
     int tagihanId, {
     int? nominal,
     required String pin,
+    String? requestId,
   }) async {
     await _api.post('/wali/anak/$santriId/tagihan/$tagihanId/bayar', {
       if (nominal != null) 'nominal': nominal,
       'pin': pin,
+      if (requestId != null) 'request_id': requestId,
     });
   }
 
@@ -173,11 +222,13 @@ class WaliApi {
     String kode,
     int nominal, {
     required String pin,
+    String? requestId,
   }) async {
     final data = await _api.post('/wali/anak/$santriId/bayar-kantin', {
       'kode': kode,
       'nominal': nominal,
       'pin': pin,
+      if (requestId != null) 'request_id': requestId,
     });
     return KantinPembayaranResult.fromJson(data as Map<String, dynamic>);
   }
@@ -245,11 +296,13 @@ class WaliApi {
     required int keSantriId,
     required int nominal,
     required String pin,
+    String? requestId,
   }) async {
     final data = await _api.post('/wali/anak/$dariSantriId/transfer', {
       'ke_santri_id': keSantriId,
       'nominal': nominal,
       'pin': pin,
+      if (requestId != null) 'request_id': requestId,
     });
     return TransferSaldoResult.fromJson(data as Map<String, dynamic>);
   }

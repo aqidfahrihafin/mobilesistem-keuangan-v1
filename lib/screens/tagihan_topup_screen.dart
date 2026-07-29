@@ -13,6 +13,7 @@ import '../utils/formatters.dart';
 import '../utils/metode_topup.dart';
 import '../widgets/flat_card.dart';
 import '../widgets/topup_result.dart';
+import '../widgets/transaction_progress_dialog.dart';
 
 const _bg = Color(0xFFF3F8F7);
 const _teal = Color(0xFF0F766E);
@@ -77,14 +78,23 @@ class _TagihanTopupScreenState extends State<TagihanTopupScreen> {
     });
 
     try {
-      final topup = await context.read<WaliApi>().bayarTagihanViaMidtrans(
-        widget.anak.id,
-        widget.tagihan.id,
-        _metode,
+      final topup = await runWithTransactionProgress(
+        context,
+        message:
+            'Sedang membuat instruksi pembayaran. Jangan tutup aplikasi atau menekan tombol berulang kali.',
+        action: () => context.read<WaliApi>().bayarTagihanViaMidtrans(
+          widget.anak.id,
+          widget.tagihan.id,
+          _metode,
+        ),
       );
       setState(() => _topup = topup);
     } on ApiException catch (e) {
-      setState(() => _error = e.message);
+      setState(
+        () => _error = e.statusCode == null
+            ? 'Instruksi pembayaran belum dapat dipastikan. Jangan membuat pembayaran baru sebelum memeriksa status tagihan.'
+            : e.message,
+      );
     } catch (e) {
       setState(() => _error = 'Gagal membuat pembayaran: $e');
     } finally {

@@ -391,30 +391,83 @@ class _TagihanListState extends State<_TagihanList> {
                   0,
                   (sum, t) => sum + t.sisa,
                 );
+                final groups = <(String, List<Tagihan>)>[];
+                for (final status in statusOrder.keys) {
+                  final group = items.where((t) => t.status == status).toList();
+                  if (group.isNotEmpty) groups.add((status, group));
+                }
+                final knownStatuses = statusOrder.keys.toSet();
+                for (final tagihan in items) {
+                  if (knownStatuses.contains(tagihan.status) ||
+                      groups.any((group) => group.$1 == tagihan.status)) {
+                    continue;
+                  }
+                  groups.add((
+                    tagihan.status,
+                    items.where((t) => t.status == tagihan.status).toList(),
+                  ));
+                }
 
                 return Column(
                   children: [
                     Expanded(
-                      child: ListView.separated(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: items.length,
-                        separatorBuilder: (context, index) =>
-                            const Divider(height: 1, indent: 68, endIndent: 16),
-                        itemBuilder: (context, index) {
-                          final tagihan = items[index];
-                          final payable = !tagihan.selesai;
-
-                          return _TagihanCard(
-                            key: ValueKey(tagihan.id),
-                            tagihan: tagihan,
-                            onOpen: () => _bukaDetail(tagihan),
-                            selectionMode: _selectionMode,
-                            selected: _selectedIds.contains(tagihan.id),
-                            onToggleSelected: (_selectionMode && payable)
-                                ? () => _toggleSelected(tagihan.id)
-                                : null,
-                          );
-                        },
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xFFE2E8E4),
+                              ),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Column(
+                              children: [
+                                for (final (status, group) in groups) ...[
+                                  _TagihanStatusHeader(status: status),
+                                  for (
+                                    var index = 0;
+                                    index < group.length;
+                                    index++
+                                  ) ...[
+                                    Builder(
+                                      builder: (context) {
+                                        final tagihan = group[index];
+                                        final payable = !tagihan.selesai;
+                                        return _TagihanCard(
+                                          key: ValueKey(tagihan.id),
+                                          tagihan: tagihan,
+                                          onOpen: () =>
+                                              _bukaDetail(tagihan),
+                                          selectionMode: _selectionMode,
+                                          selected: _selectedIds.contains(
+                                            tagihan.id,
+                                          ),
+                                          onToggleSelected:
+                                              (_selectionMode && payable)
+                                              ? () => _toggleSelected(
+                                                  tagihan.id,
+                                                )
+                                              : null,
+                                        );
+                                      },
+                                    ),
+                                    if (index < group.length - 1)
+                                      const Padding(
+                                        padding: EdgeInsets.only(left: 64),
+                                        child: Divider(
+                                          height: 1,
+                                          color: Color(0xFFEEF0F3),
+                                        ),
+                                      ),
+                                  ],
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     if (_selectionMode && selectedTagihan.isNotEmpty)
@@ -477,7 +530,7 @@ class _TagihanCardState extends State<_TagihanCard> {
       child: InkWell(
         onTap: widget.selectionMode ? widget.onToggleSelected : widget.onOpen,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 14),
           child: Row(
             children: [
               if (widget.selectionMode)
@@ -574,6 +627,30 @@ class _TagihanCardState extends State<_TagihanCard> {
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TagihanStatusHeader extends StatelessWidget {
+  final String status;
+
+  const _TagihanStatusHeader({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 9),
+      color: const Color(0xFFF8FAF9),
+      child: Text(
+        (statusTagihanLabel[status] ?? status).toUpperCase(),
+        style: const TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.6,
+          color: Color(0xFF64748B),
         ),
       ),
     );

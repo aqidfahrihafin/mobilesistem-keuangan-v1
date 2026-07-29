@@ -351,13 +351,26 @@ class _TransaksiListViewState extends State<_TransaksiListView> {
                     ],
                   )
                 : ListView(
-                    padding: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                     children: [
-                      for (final (label, group) in groupByRelativeDate(
-                        items,
-                        (t) => t.createdAt,
-                      ))
-                        ..._buildRiwayatGroup(context, label, group),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8E4)),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Column(
+                          children: [
+                            for (final (label, group)
+                                in groupByRelativeDate(
+                                  items,
+                                  (t) => t.createdAt,
+                                ))
+                              ..._buildRiwayatGroup(context, label, group),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
           ),
@@ -471,33 +484,34 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
   }
 }
 
-/// Builds one date-grouped section for the flat Transaksi/Pengeluaran list:
-/// an uppercase grey label followed by its rows, each separated by a
-/// hairline divider instead of individual card borders - the borderless
-/// list look the redesign uses specifically for transaction history
-/// (Tagihan cards elsewhere in the app stay boxed; this is a deliberate,
-/// separate visual language for money-movement lists).
+/// Builds an internal date section inside the single transaction card.
 List<Widget> _buildRiwayatGroup(
   BuildContext context,
   String label,
   List<Transaksi> group,
 ) {
   return [
-    Padding(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
+    Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 9),
+      color: const Color(0xFFF8FAF9),
       child: Text(
         label.toUpperCase(),
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 10.5,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
           letterSpacing: 0.6,
-          color: Colors.grey[500],
+          color: Color(0xFF64748B),
         ),
       ),
     ),
     for (var i = 0; i < group.length; i++) ...[
       TransaksiListItem(
         tx: group[i],
+        padding: const EdgeInsets.symmetric(
+          vertical: 12,
+          horizontal: 14,
+        ),
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => TransaksiDetailScreen(transaksi: group[i]),
@@ -506,7 +520,7 @@ List<Widget> _buildRiwayatGroup(
       ),
       if (i < group.length - 1)
         const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.only(left: 64),
           child: Divider(height: 1, color: Color(0xFFEEF0F3)),
         ),
     ],
@@ -616,34 +630,9 @@ class _LaporanRingkasanState extends State<_LaporanRingkasan> {
             child: Column(
               children: [
                 const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _SummaryCard(
-                        label: 'Total Masuk',
-                        value: formatRupiah(totalMasuk),
-                        color: const Color(0xFF15803D),
-                        icon: Icons.arrow_downward_rounded,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _SummaryCard(
-                        label: 'Total Keluar',
-                        value: formatRupiah(totalKeluar),
-                        color: const Color(0xFFB91C1C),
-                        icon: Icons.arrow_upward_rounded,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                _SummaryCard(
-                  label: 'Selisih Periode Ini',
-                  value: formatRupiah(totalMasuk - totalKeluar),
-                  color: _teal,
-                  icon: Icons.account_balance_wallet_outlined,
-                  full: true,
+                _FinancialSummaryCard(
+                  totalMasuk: totalMasuk,
+                  totalKeluar: totalKeluar,
                 ),
                 const SizedBox(height: 22),
                 Align(
@@ -766,83 +755,152 @@ class _LaporanRingkasanState extends State<_LaporanRingkasan> {
   }
 }
 
-class _SummaryCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-  final IconData icon;
-  final bool full;
+class _FinancialSummaryCard extends StatelessWidget {
+  final int totalMasuk;
+  final int totalKeluar;
 
-  const _SummaryCard({
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.icon,
-    this.full = false,
+  const _FinancialSummaryCard({
+    required this.totalMasuk,
+    required this.totalKeluar,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isPositive = !value.startsWith('-');
-    final effectiveColor = full && !isPositive
-        ? const Color(0xFFB91C1C)
-        : color;
+    final selisih = totalMasuk - totalKeluar;
+    final selisihColor = selisih < 0 ? const Color(0xFFB91C1C) : _teal;
+
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: full ? 16 : 13,
-        vertical: full ? 15 : 14,
-      ),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE2E8E4)),
       ),
-      child: Row(
-        crossAxisAlignment: full
-            ? CrossAxisAlignment.center
-            : CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: effectiveColor.withValues(alpha: 0.09),
-              borderRadius: BorderRadius.circular(10),
+          const Text(
+            'Ringkasan Periode',
+            style: TextStyle(
+              color: Color(0xFF64748B),
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
             ),
-            child: Icon(icon, color: effectiveColor, size: 18),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11.5,
-                    color: Color(0xFF64748B),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: full ? 17 : 14,
-                    color: const Color(0xFF0F172A),
-                    letterSpacing: -0.3,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+          const SizedBox(height: 6),
+          Text(
+            formatRupiah(selisih),
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: selisihColor,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
             ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            selisih < 0
+                ? 'Pengeluaran lebih besar dari pemasukan'
+                : 'Selisih pemasukan dan pengeluaran',
+            style: const TextStyle(
+              color: Color(0xFF94A3B8),
+              fontSize: 11,
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 14),
+            child: Divider(height: 1, color: Color(0xFFEEF0F3)),
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: _SummaryMetric(
+                  label: 'Total Masuk',
+                  value: formatRupiah(totalMasuk),
+                  icon: Icons.south_rounded,
+                  color: const Color(0xFF15803D),
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 42,
+                color: const Color(0xFFEEF0F3),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: _SummaryMetric(
+                  label: 'Total Keluar',
+                  value: formatRupiah(totalKeluar),
+                  icon: Icons.north_rounded,
+                  color: const Color(0xFFB91C1C),
+                ),
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SummaryMetric extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const _SummaryMetric({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.09),
+            borderRadius: BorderRadius.circular(9),
+          ),
+          alignment: Alignment.center,
+          child: Icon(icon, color: color, size: 16),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 10.5,
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF0F172A),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

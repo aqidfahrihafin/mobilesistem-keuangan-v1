@@ -22,6 +22,7 @@ import '../widgets/geometric_pattern.dart';
 import '../widgets/skeleton.dart';
 import '../widgets/transaksi_list_item.dart';
 import 'all_services_screen.dart';
+import 'notifications_screen.dart';
 import 'santri_profile_screen.dart';
 import 'scan_bayar_screen.dart';
 import 'topup_tab.dart';
@@ -221,7 +222,6 @@ class _AnakDashboardState extends State<_AnakDashboard> {
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
             child: _HomeHeader(
               userName: user?.name,
-              tagihanFuture: _tagihanFuture,
             ),
           ),
         ),
@@ -487,17 +487,15 @@ class _SectionHeader extends StatelessWidget {
 }
 
 /// Plain, non-teal greeting row - "Selamat Malam / Yanto 👋 / Kelola
-/// keuangan dengan mudah" plus a notification bell (dot shown when there's
-/// a tagihan due soon/overdue, reusing the same hitungJatuhTempo signal
-/// already driving the stat-tile badge - not a separate fake indicator)
+/// keuangan dengan mudah" plus a notification bell (dot shown when there
+/// are unread items in the persistent notification inbox)
 /// and the wali's own avatar. Replaces the previous teal full-bleed banner
 /// that carried the greeting - the balance card below is now the one teal
 /// surface on the page.
 class _HomeHeader extends StatelessWidget {
   final String? userName;
-  final Future<List<Tagihan>> tagihanFuture;
 
-  const _HomeHeader({required this.userName, required this.tagihanFuture});
+  const _HomeHeader({required this.userName});
 
   @override
   Widget build(BuildContext context) {
@@ -541,16 +539,7 @@ class _HomeHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        FutureBuilder<List<Tagihan>>(
-          future: tagihanFuture,
-          builder: (context, snapshot) {
-            final urgent = (snapshot.data ?? [])
-                .map(hitungJatuhTempo)
-                .whereType<JatuhTempoInfo>()
-                .length;
-            return _NotifBell(urgent: urgent);
-          },
-        ),
+        const _NotifBell(),
         const SizedBox(width: 10),
         InkWell(
           borderRadius: BorderRadius.circular(10),
@@ -572,16 +561,43 @@ class _HomeHeader extends StatelessWidget {
   }
 }
 
-class _NotifBell extends StatelessWidget {
-  final int urgent;
+class _NotifBell extends StatefulWidget {
+  const _NotifBell();
 
-  const _NotifBell({required this.urgent});
+  @override
+  State<_NotifBell> createState() => _NotifBellState();
+}
+
+class _NotifBellState extends State<_NotifBell> {
+  int _unread = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshUnread();
+  }
+
+  Future<void> _refreshUnread() async {
+    try {
+      final inbox = await context.read<WaliApi>().getNotifications();
+      if (mounted) setState(() => _unread = inbox.unreadCount);
+    } catch (_) {
+      // Badge is best-effort; the inbox itself provides a retry action.
+    }
+  }
+
+  Future<void> _openNotifications() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const NotificationsScreen()),
+    );
+    if (mounted) await _refreshUnread();
+  }
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       borderRadius: BorderRadius.circular(10),
-      onTap: () => context.read<TabIndexProvider>().go(1),
+      onTap: _openNotifications,
       child: SizedBox(
         width: 40,
         height: 40,
@@ -594,7 +610,7 @@ class _NotifBell extends StatelessWidget {
               color: Colors.grey[700],
               size: 23,
             ),
-            if (urgent > 0)
+            if (_unread > 0)
               Positioned(
                 top: 6,
                 right: 8,

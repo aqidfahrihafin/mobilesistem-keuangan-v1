@@ -31,6 +31,7 @@ class AuthService extends ChangeNotifier {
   bool _biometricEnabled = false;
   String? _loginPin;
   bool _hasOnboarded = false;
+  String? _sessionNotice;
 
   /// True whenever the session is otherwise valid but still needs a
   /// biometric check before the wali can see the app - set at boot (if
@@ -39,7 +40,9 @@ class AuthService extends ChangeNotifier {
   bool _needsBiometricUnlock = false;
   bool _needsPinUnlock = false;
 
-  AuthService(this._api, this._biometric, this._push);
+  AuthService(this._api, this._biometric, this._push) {
+    _api.setUnauthorizedHandler(_handleUnauthorized);
+  }
 
   WaliUser? get user => _user;
   bool get isLoggedIn => _token != null && _user != null;
@@ -50,6 +53,15 @@ class AuthService extends ChangeNotifier {
   bool get needsPinUnlock => _needsPinUnlock;
   bool get loginPinEnabled => _loginPin != null;
   bool get hasOnboarded => _hasOnboarded;
+  String? get sessionNotice => _sessionNotice;
+
+  Future<void> _handleUnauthorized() async {
+    if (_token == null) return;
+    _sessionNotice =
+        'Sesi Anda telah berakhir demi keamanan. Silakan masuk kembali untuk melanjutkan.';
+    await _clearSession();
+    notifyListeners();
+  }
 
   /// True when there's a retained token a fingerprint tap on the login
   /// screen can resume - only the case right after logout() soft-locked
@@ -124,6 +136,7 @@ class AuthService extends ChangeNotifier {
     _user = WaliUser.fromJson(data['user'] as Map<String, dynamic>);
     _needsPinUnlock = false;
     _needsBiometricUnlock = false;
+    _sessionNotice = null;
     await _storage.write(key: 'token', value: _token);
     _api.setToken(_token);
     unawaited(_push.registerCurrentToken());
@@ -177,6 +190,7 @@ class AuthService extends ChangeNotifier {
     if (_loginPin == null || pin != _loginPin) return false;
     _needsPinUnlock = false;
     _needsBiometricUnlock = false;
+    _sessionNotice = null;
     notifyListeners();
     return true;
   }
@@ -187,6 +201,7 @@ class AuthService extends ChangeNotifier {
     if (result == BiometricAuthResult.success) {
       _needsBiometricUnlock = false;
       _needsPinUnlock = false;
+      _sessionNotice = null;
       notifyListeners();
     }
 
@@ -247,6 +262,11 @@ class AuthService extends ChangeNotifier {
   Future<void> lockForInactivity() async {
     if (!isLoggedIn) return;
 
+    _sessionNotice = _loginPin != null
+        ? 'Aplikasi dikunci otomatis karena tidak aktif atau sempat ditinggalkan. Masukkan PIN untuk melanjutkan.'
+        : _biometricEnabled
+        ? 'Aplikasi dikunci otomatis karena tidak aktif atau sempat ditinggalkan. Verifikasi sidik jari untuk melanjutkan.'
+        : 'Sesi ditutup otomatis karena aplikasi tidak aktif. Silakan masuk kembali untuk melanjutkan.';
     if (_loginPin != null || _biometricEnabled) {
       _needsPinUnlock = _loginPin != null;
       _needsBiometricUnlock = _biometricEnabled && _loginPin == null;

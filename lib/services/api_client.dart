@@ -36,8 +36,13 @@ class ApiException implements Exception {
 
 class ApiClient {
   String? _token;
+  FutureOr<void> Function()? _onUnauthorized;
+  bool _handlingUnauthorized = false;
 
   void setToken(String? token) => _token = token;
+  void setUnauthorizedHandler(FutureOr<void> Function() handler) {
+    _onUnauthorized = handler;
+  }
 
   /// Pings the API host so the login screen can warn the user up front if
   /// the server is down or in maintenance, instead of only finding out
@@ -170,22 +175,55 @@ class ApiClient {
     }
 
     if (response.statusCode == 401) {
+      if (!_handlingUnauthorized && _token != null) {
+        _handlingUnauthorized = true;
+        try {
+          await _onUnauthorized?.call();
+        } finally {
+          _handlingUnauthorized = false;
+        }
+      }
       throw ApiException(
         'Sesi berakhir, silakan login kembali.',
         statusCode: 401,
       );
     }
 
-    final message = (decoded is Map && decoded['message'] is String)
-        ? decoded['message'] as String
-        : 'Terjadi kesalahan, silakan coba lagi.';
-
     Map<String, List<String>>? errors;
     if (decoded is Map && decoded['errors'] is Map) {
-      errors = (decoded['errors'] as Map).map(
-        (key, value) => MapEntry(key as String, (value as List).cast<String>()),
-      );
+      errors = {};
+      for (final entry in (decoded['errors'] as Map).entries) {
+        final key = entry.key.toString();
+        final value = entry.value;
+        final messages = value is List
+            ? value
+                  .map((item) => item?.toString().trim() ?? '')
+                  .where((item) => item.isNotEmpty)
+                  .toList()
+            : [
+                if (value?.toString().trim().isNotEmpty == true)
+                  value.toString().trim(),
+              ];
+        if (messages.isNotEmpty) errors[key] = messages;
+      }
+      if (errors.isEmpty) errors = null;
     }
+
+    final rawMessage = decoded is Map
+        ? decoded['message']?.toString().trim()
+        : null;
+    String? firstFieldError;
+    for (final messages in errors?.values ?? const <List<String>>[]) {
+      if (messages.isNotEmpty) {
+        firstFieldError = messages.first;
+        break;
+      }
+    }
+    final message = response.statusCode >= 500
+        ? _fallbackErrorMessage(response.statusCode)
+        : rawMessage?.isNotEmpty == true
+        ? rawMessage!
+        : firstFieldError ?? _fallbackErrorMessage(response.statusCode);
 
     final code = (decoded is Map && decoded['code'] is String)
         ? decoded['code'] as String
@@ -197,5 +235,17 @@ class ApiClient {
       statusCode: response.statusCode,
       code: code,
     );
+  }
+
+  String _fallbackErrorMessage(int statusCode) {
+    return switch (statusCode) {
+      403 => 'Anda tidak memiliki akses untuk melakukan tindakan ini.',
+      404 => 'Data yang diminta tidak ditemukan atau sudah berubah.',
+      422 => 'Pembayaran ditolak. Periksa nominal, saldo, dan PIN lalu coba lagi.',
+      423 => 'PIN transaksi sementara dikunci. Silakan coba kembali nanti.',
+      _ when statusCode >= 500 =>
+        'Server sedang bermasalah. Silakan coba lagi beberapa saat.',
+      _ => 'Terjadi kesalahan, silakan coba lagi.',
+    };
   }
 }

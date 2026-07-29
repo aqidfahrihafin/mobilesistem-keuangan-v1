@@ -1,7 +1,12 @@
+import 'dart:convert';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import '../models/notification_item.dart';
+import '../screens/notification_destination_screen.dart';
+import '../screens/notifications_screen.dart';
 import 'wali_api.dart';
 
 const _teal = Color(0xFF0F766E);
@@ -22,10 +27,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {}
 /// (FCM does not auto-display those - only background/killed-state
 /// messages get a system banner for free).
 ///
-/// v1 scope: tapping a notification just brings the app to its root screen
-/// (MainScreen, via [navigatorKey]) rather than deep-linking to the specific
-/// tagihan/transaksi/topup it refers to - the `data` payload still carries a
-/// `type` + relevant id for that to be added later without a rework.
+/// Tapping a push opens the exact transaction/tagihan destination when its
+/// payload contains an object id, with the inbox as a safe fallback.
 class PushNotificationService {
   final WaliApi _waliApi;
   final GlobalKey<NavigatorState> navigatorKey;
@@ -50,6 +53,23 @@ class PushNotificationService {
         android: AndroidInitializationSettings('@mipmap/ic_launcher'),
         iOS: DarwinInitializationSettings(),
       ),
+      onDidReceiveNotificationResponse: (response) {
+        final payload = response.payload;
+        if (payload == null || payload.isEmpty) {
+          _openNotificationInbox();
+          return;
+        }
+        try {
+          final decoded = jsonDecode(payload);
+          if (decoded is Map) {
+            _openNotificationDestination(
+              Map<String, dynamic>.from(decoded),
+            );
+          }
+        } catch (_) {
+          _openNotificationInbox();
+        }
+      },
     );
 
     FirebaseMessaging.onMessage.listen(_showForegroundNotification);
@@ -119,10 +139,52 @@ class PushNotificationService {
         ),
         iOS: const DarwinNotificationDetails(),
       ),
+      payload: jsonEncode({
+        ...message.data,
+        '_title': notification.title,
+        '_body': notification.body,
+      }),
     );
   }
 
   void _handleNotificationTap(RemoteMessage message) {
-    navigatorKey.currentState?.popUntil((route) => route.isFirst);
+    if (message.data.isEmpty) {
+      _openNotificationInbox();
+      return;
+    }
+    _openNotificationDestination({
+      ...message.data,
+      '_title': message.notification?.title,
+      '_body': message.notification?.body,
+    });
+  }
+
+  void _openNotificationDestination(Map<String, dynamic> data) {
+    final navigator = navigatorKey.currentState;
+    if (navigator == null) return;
+    navigator.popUntil((route) => route.isFirst);
+    navigator.push(
+      MaterialPageRoute<void>(
+        builder: (_) => NotificationDestinationScreen(
+          item: NotificationItem(
+            id: 0,
+            title: data['_title']?.toString() ?? 'Notifikasi',
+            body: data['_body']?.toString() ?? '',
+            type: data['type']?.toString() ?? 'info',
+            data: data,
+            createdAt: DateTime.now(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openNotificationInbox() {
+    final navigator = navigatorKey.currentState;
+    if (navigator == null) return;
+    navigator.popUntil((route) => route.isFirst);
+    navigator.push(
+      MaterialPageRoute<void>(builder: (_) => const NotificationsScreen()),
+    );
   }
 }

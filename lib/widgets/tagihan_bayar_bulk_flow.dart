@@ -402,6 +402,10 @@ class _BulkProsesDialogState extends State<_BulkProsesDialog> {
           widget.anak.id,
           tagihan.id,
           pin: widget.pin,
+          requestId: transactionRequestId('tagihan', [
+            tagihan.id,
+            tagihan.sisa,
+          ]),
         );
         hasil.add(_HasilBayar(tagihan: tagihan, sukses: true));
       } on ApiException catch (e) {

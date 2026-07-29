@@ -16,3 +16,10 @@ class PaymentFlowGuard {
     }
   }
 }
+
+/// Stable for five minutes so a retry after a slow/timeout response reaches
+/// the same backend ledger operation instead of charging twice.
+String transactionRequestId(String action, List<Object> parts) {
+  final bucket = DateTime.now().millisecondsSinceEpoch ~/ 300000;
+  return '$action-${parts.join('-')}-$bucket';
+}

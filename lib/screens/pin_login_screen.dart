@@ -6,6 +6,7 @@ import '../providers/tab_index_provider.dart';
 import '../services/auth_service.dart';
 import '../services/biometric_service.dart';
 import '../widgets/app_logo_image.dart';
+import '../widgets/session_notice_banner.dart';
 
 const _teal = Color(0xFF0F8F83);
 const _ink = Color(0xFF13213A);
@@ -156,6 +157,15 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                           color: Color(0xFF7A869A),
                         ),
                       ),
+                      if (auth.sessionNotice != null) ...[
+                        const SizedBox(height: 16),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 320),
+                          child: SessionNoticeBanner(
+                            message: auth.sessionNotice!,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 28),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,

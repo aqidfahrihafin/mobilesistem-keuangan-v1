@@ -6,14 +6,15 @@ import '../providers/anak_provider.dart';
 import '../services/api_client.dart';
 import '../services/wali_api.dart';
 import '../utils/formatters.dart';
+import '../utils/payment_flow_guard.dart';
 import '../widgets/confirm_dialog.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/error_state_view.dart';
 import '../widgets/glass_modal_surface.dart';
 import '../widgets/pin_entry_sheet.dart';
 import '../widgets/saldo_minimum_notice.dart';
-import '../widgets/santri_summary_card.dart';
 import '../widgets/success_dialog.dart';
+import '../widgets/transaction_progress_dialog.dart';
 import 'pin_setup_screen.dart';
 
 const _bg = Color(0xFFF3F8F7);
@@ -297,13 +298,25 @@ class _TransferFormState extends State<_TransferForm> {
       _submitting = true;
       _nominalError = null;
     });
+    final startedAt = DateTime.now();
+    final requestId = transactionRequestId('transfer', [
+      widget.dari.id,
+      ke.id,
+      nominal,
+    ]);
 
     try {
-      final hasil = await context.read<WaliApi>().transferSaldo(
-        dariSantriId: widget.dari.id,
-        keSantriId: ke.id,
-        nominal: nominal,
-        pin: pin,
+      final hasil = await runWithTransactionProgress(
+        context,
+        message:
+            'Sedang mengirim saldo. Jangan tutup aplikasi atau mengulangi transfer.',
+        action: () => context.read<WaliApi>().transferSaldo(
+          dariSantriId: widget.dari.id,
+          keSantriId: ke.id,
+          nominal: nominal,
+          pin: pin,
+          requestId: requestId,
+        ),
       );
       if (!mounted) return;
 
@@ -329,6 +342,51 @@ class _TransferFormState extends State<_TransferForm> {
 
       if (mounted) Navigator.of(context).pop();
     } on ApiException catch (e) {
+      if (e.statusCode == null && mounted) {
+        try {
+          final transaksi = await runWithTransactionProgress(
+            context,
+            message:
+                'Koneksi terputus. Sedang memastikan hasil transfer...',
+            action: () =>
+                context.read<WaliApi>().getTransaksi(widget.dari.id),
+          );
+          final tercatat = transaksi.any(
+            (item) =>
+                item.jenis == 'transfer_antar_santri' &&
+                !item.isKredit &&
+                item.nominal == nominal &&
+                item.createdAt.isAfter(
+                  startedAt.subtract(const Duration(seconds: 30)),
+                ),
+          );
+          if (tercatat && mounted) {
+            await showSuccessDialog(
+              context,
+              title: 'Transfer Terkonfirmasi',
+              subtitle:
+                  'Server telah mencatat transfer meskipun koneksi sempat terputus.',
+              rincian: [
+                ('Ke', ke.nama),
+                ('Nominal Transfer', formatRupiah(nominal)),
+              ],
+              sinkronkan: () =>
+                  context.read<AnakProvider>().refreshSaldoSelected(),
+            );
+            if (mounted) Navigator.of(context).pop();
+            return;
+          }
+        } catch (_) {
+          // Leave the result guarded and explain that it must not be retried.
+        }
+        if (mounted) {
+          setState(
+            () => _nominalError =
+                'Hasil transfer belum dapat dipastikan. Jangan transfer ulang; periksa Riwayat Transaksi terlebih dahulu.',
+          );
+        }
+        return;
+      }
       setState(() => _nominalError = e.errorFor('nominal') ?? e.message);
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -407,98 +465,89 @@ class _TransferFormState extends State<_TransferForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Only one status message shown at a time - the specific
-              // SaldoMinimumNotice below fully replaces this generic rules
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8, left: 2),
-                child: Text(
-                  'Dari',
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+              const Text(
+                'Tujuan Transfer',
+                style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE2E8E4)),
+                ),
+                child: Column(
+                  children: [
+                    _TransferParty(
+                      anak: widget.dari,
+                      label: 'DARI',
+                      saldo: widget.dari.saldo,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 19),
+                          Container(
+                            width: 2,
+                            height: 18,
+                            color: const Color(0xFFD7E7E4),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Divider(
+                              height: 1,
+                              color: Color(0xFFEDF2F1),
+                            ),
+                          ),
+                          Container(
+                            width: 30,
+                            height: 30,
+                            decoration: BoxDecoration(
+                              color: _teal.withValues(alpha: 0.09),
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: const Icon(
+                              Icons.south_rounded,
+                              size: 17,
+                              color: _teal,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    InkWell(
+                      onTap: diBawahMinimum
+                          ? null
+                          : () => _pilihPenerima(saudara),
+                      borderRadius: BorderRadius.circular(10),
+                      child: _ke == null
+                          ? _RecipientPlaceholder(disabled: diBawahMinimum)
+                          : _TransferParty(
+                              anak: _ke!,
+                              label: 'KE',
+                              trailing: Icons.unfold_more_rounded,
+                            ),
+                    ),
+                  ],
                 ),
               ),
-              SantriSummaryCard(anak: widget.dari),
               if (diBawahMinimum) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 SaldoMinimumNotice(
                   namaSantri: widget.dari.nama,
                   minimal: minimal,
                   aksi: 'transfer',
                 ),
               ],
-              const SizedBox(height: 20),
+              const SizedBox(height: 22),
               const Padding(
                 padding: EdgeInsets.only(bottom: 8, left: 2),
                 child: Text(
-                  'Ke',
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
-                ),
-              ),
-              InkWell(
-                onTap: diBawahMinimum ? null : () => _pilihPenerima(saudara),
-                borderRadius: BorderRadius.circular(10),
-                child: _ke == null
-                    ? Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: diBawahMinimum
-                              ? const Color(0xBFE8EEED)
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: diBawahMinimum
-                                ? const Color(0x6694A3A0)
-                                : const Color(0xFFE2E8E4),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: diBawahMinimum
-                                    ? Colors.grey.withValues(alpha: 0.12)
-                                    : _teal.withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              alignment: Alignment.center,
-                              child: Icon(
-                                diBawahMinimum
-                                    ? Icons.lock_outline_rounded
-                                    : Icons.person_add_alt_rounded,
-                                color: diBawahMinimum
-                                    ? Colors.grey[500]
-                                    : _teal,
-                                size: 18,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'Pilih santri penerima',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            if (!diBawahMinimum)
-                              Icon(
-                                Icons.chevron_right_rounded,
-                                color: Colors.grey[400],
-                              ),
-                          ],
-                        ),
-                      )
-                    : _AnakRow(anak: _ke!, trailing: Icons.unfold_more_rounded),
-              ),
-              const SizedBox(height: 20),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8, left: 2),
-                child: Text(
-                  'Nominal',
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+                  'Nominal Transfer',
+                  style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
                 ),
               ),
               TextField(
@@ -508,8 +557,8 @@ class _TransferFormState extends State<_TransferForm> {
                 keyboardType: TextInputType.number,
                 onChanged: (_) => setState(() => _nominalError = null),
                 style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
                 ),
                 decoration: InputDecoration(
                   prefixText:
@@ -517,7 +566,7 @@ class _TransferFormState extends State<_TransferForm> {
                           _nominalController.text.isNotEmpty)
                       ? 'Rp '
                       : null,
-                  hintText: '50.000',
+                  hintText: '0',
                   errorText: _nominalError,
                   errorMaxLines: 2,
                   suffixIcon: diBawahMinimum
@@ -608,22 +657,22 @@ class _TransferFormState extends State<_TransferForm> {
   }
 }
 
-class _AnakRow extends StatelessWidget {
+class _TransferParty extends StatelessWidget {
   final Anak anak;
   final IconData? trailing;
+  final String label;
+  final int? saldo;
 
-  const _AnakRow({required this.anak, this.trailing});
+  const _TransferParty({
+    required this.anak,
+    required this.label,
+    this.trailing,
+    this.saldo,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE2E8E4)),
-      ),
-      child: Row(
+    return Row(
         children: [
           CircleAvatar(
             backgroundColor: _teal,
@@ -641,6 +690,16 @@ class _AnakRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
+                  label,
+                  style: const TextStyle(
+                    color: Color(0xFF94A3B8),
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.7,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
                   anak.nama,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
@@ -654,10 +713,90 @@ class _AnakRow extends StatelessWidget {
               ],
             ),
           ),
+          if (saldo != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text(
+                    'SALDO',
+                    style: TextStyle(
+                      color: Color(0xFF94A3B8),
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    formatRupiah(saldo!),
+                    style: const TextStyle(
+                      color: _teal,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           if (trailing != null)
             Icon(trailing, color: Colors.grey[400], size: 20),
         ],
-      ),
+    );
+  }
+}
+
+class _RecipientPlaceholder extends StatelessWidget {
+  final bool disabled;
+
+  const _RecipientPlaceholder({required this.disabled});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        CircleAvatar(
+          backgroundColor: disabled
+              ? Colors.grey.withValues(alpha: 0.12)
+              : _teal.withValues(alpha: 0.1),
+          child: Icon(
+            disabled
+                ? Icons.lock_outline_rounded
+                : Icons.person_add_alt_rounded,
+            color: disabled ? Colors.grey[500] : _teal,
+            size: 18,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'KE',
+                style: TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.7,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                disabled
+                    ? 'Transfer belum tersedia'
+                    : 'Pilih santri penerima',
+                style: TextStyle(
+                  color: disabled ? Colors.grey[500] : const Color(0xFF334155),
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (!disabled)
+          Icon(Icons.chevron_right_rounded, color: Colors.grey[400]),
+      ],
     );
   }
 }

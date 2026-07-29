@@ -62,6 +62,12 @@ class AllServicesScreen extends StatelessWidget {
                   label: 'Tagihan',
                   onTap: () => _goTab(context, 1),
                 ),
+                const _ServiceItem(
+                  icon: Icons.savings_outlined,
+                  label: 'Tabungan',
+                  enabled: false,
+                  comingSoon: true,
+                ),
               ],
             ),
             const SizedBox(height: 22),
@@ -162,7 +168,7 @@ class _ServiceSection extends StatelessWidget {
               final columns = constraints.maxWidth < 340 ? 3 : 4;
 
               return GridView.builder(
-                padding: const EdgeInsets.fromLTRB(14, 16, 14, 18),
+                padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: items.length,
@@ -170,7 +176,7 @@ class _ServiceSection extends StatelessWidget {
                   crossAxisCount: columns,
                   crossAxisSpacing: 10,
                   mainAxisSpacing: 16,
-                  mainAxisExtent: 104,
+                  mainAxisExtent: 92,
                 ),
                 itemBuilder: (context, index) => items[index],
               );

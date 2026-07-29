@@ -6,6 +6,7 @@ import '../services/api_client.dart';
 import '../services/auth_service.dart';
 import '../services/biometric_service.dart';
 import '../widgets/app_logo_image.dart';
+import '../widgets/session_notice_banner.dart';
 import 'pin_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -157,6 +158,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 30),
+                        if (auth.sessionNotice != null) ...[
+                          SessionNoticeBanner(message: auth.sessionNotice!),
+                          const SizedBox(height: 12),
+                        ],
                         if (_serverStatus == ServerStatus.maintenance ||
                             _serverStatus == ServerStatus.unreachable) ...[
                           _ServerStatusBanner(

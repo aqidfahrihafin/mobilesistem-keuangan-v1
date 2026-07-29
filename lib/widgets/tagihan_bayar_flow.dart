@@ -16,6 +16,7 @@ import 'confirm_dialog.dart';
 import 'glass_modal_surface.dart';
 import 'pin_entry_sheet.dart';
 import 'success_dialog.dart';
+import 'transaction_progress_dialog.dart';
 
 const _bg = Color(0xFFF7F8FA);
 const _teal = Color(0xFF0F766E);
@@ -163,13 +164,23 @@ Future<bool> _bayarTagihanFlowUnlocked(
     subtitle: 'Masukkan PIN untuk mengonfirmasi pembayaran tagihan ini.',
   );
   if (pin == null || !context.mounted) return false;
+  final requestId = transactionRequestId('tagihan', [
+    tagihan.id,
+    nominalDibayar,
+  ]);
 
   try {
-    await context.read<WaliApi>().bayarTagihanDariSaldo(
-      anak.id,
-      tagihan.id,
-      nominal: tagihan.bisaDicicil ? hasil.nominal : null,
-      pin: pin,
+    await runWithTransactionProgress<void>(
+      context,
+      message:
+          'Sedang memproses pembayaran. Jangan tutup aplikasi atau mengulangi pembayaran.',
+      action: () => context.read<WaliApi>().bayarTagihanDariSaldo(
+        anak.id,
+        tagihan.id,
+        nominal: tagihan.bisaDicicil ? hasil.nominal : null,
+        pin: pin,
+        requestId: requestId,
+      ),
     );
     if (!context.mounted) return false;
 
@@ -202,21 +213,101 @@ Future<bool> _bayarTagihanFlowUnlocked(
   } on ApiException catch (e) {
     if (!context.mounted) return false;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(e.message),
-        backgroundColor: Colors.red,
-        action: e.code == 'saldo_di_bawah_minimum'
-            ? SnackBarAction(
-                label: 'Via Midtrans',
-                textColor: Colors.white,
-                onPressed: () => _bayarViaMidtrans(context, anak, tagihan),
-              )
-            : null,
-      ),
+    if (e.statusCode == null) {
+      try {
+        final terbaru = await runWithTransactionProgress<Tagihan>(
+          context,
+          message:
+              'Koneksi terputus. Sedang memastikan apakah pembayaran sudah berhasil...',
+          action: () => context.read<WaliApi>().getTagihanDetail(
+            anak.id,
+            tagihan.id,
+          ),
+        );
+        if (!context.mounted) return false;
+
+        final nominalTerkonfirmasi = tagihan.sisa - terbaru.sisa;
+        if (nominalTerkonfirmasi > 0) {
+          await showSuccessDialog(
+            context,
+            title: 'Pembayaran Terkonfirmasi',
+            subtitle:
+                'Server telah mencatat pembayaran meskipun koneksi sempat terputus.',
+            rincian: [
+              ('Nominal Dibayar', formatRupiah(nominalTerkonfirmasi)),
+              if (terbaru.sisa > 0)
+                ('Sisa Tagihan', formatRupiah(terbaru.sisa))
+              else
+                ('Status', 'Lunas'),
+            ],
+            sinkronkan: () =>
+                context.read<AnakProvider>().refreshSaldoSelected(),
+          );
+          return true;
+        }
+      } catch (_) {
+        // The result remains ambiguous; show the guarded instruction below.
+      }
+
+      _showPaymentError(
+        context,
+        'Hasil pembayaran belum dapat dipastikan karena koneksi bermasalah. '
+        'Jangan bayar ulang. Buka kembali atau tarik layar Tagihan untuk memastikan status terbaru.',
+      );
+      return false;
+    }
+
+    _showPaymentError(
+      context,
+      e.message,
+      onViaMidtrans: e.code == 'saldo_di_bawah_minimum'
+          ? () => _bayarViaMidtrans(context, anak, tagihan)
+          : null,
+    );
+    return false;
+  } catch (_) {
+    if (!context.mounted) return false;
+
+    _showPaymentError(
+      context,
+      'Pembayaran belum dapat diproses. Silakan periksa koneksi dan coba lagi.',
     );
     return false;
   }
+}
+
+void _showPaymentError(
+  BuildContext context,
+  String message, {
+  VoidCallback? onViaMidtrans,
+}) {
+  final visibleMessage = message.trim().isNotEmpty
+      ? message.trim()
+      : 'Pembayaran ditolak. Periksa nominal, saldo, dan PIN lalu coba lagi.';
+
+  final messenger = ScaffoldMessenger.of(context);
+  messenger
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        content: Text(
+          visibleMessage,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: const Color(0xFFB42318),
+        duration: const Duration(seconds: 6),
+        action: onViaMidtrans == null
+            ? null
+            : SnackBarAction(
+                label: 'Via Midtrans',
+                textColor: Colors.white,
+                onPressed: onViaMidtrans,
+              ),
+      ),
+    );
 }
 
 Future<bool> _bayarViaMidtrans(

@@ -7,6 +7,7 @@ import '../providers/anak_provider.dart';
 import '../services/api_client.dart';
 import '../services/wali_api.dart';
 import '../utils/formatters.dart';
+import '../utils/payment_flow_guard.dart';
 import '../widgets/anak_switcher.dart';
 import '../widgets/confirm_dialog.dart';
 import '../widgets/pin_entry_sheet.dart';
@@ -14,6 +15,7 @@ import '../widgets/qr_scanner_frame.dart';
 import '../widgets/saldo_minimum_notice.dart';
 import '../widgets/santri_summary_card.dart';
 import '../widgets/success_dialog.dart';
+import '../widgets/transaction_progress_dialog.dart';
 import 'pin_setup_screen.dart';
 
 const _bg = Color(0xFFF3F8F7);
@@ -186,13 +188,25 @@ class _ScanBayarScreenState extends State<ScanBayarScreen> {
       _submitting = true;
       _payError = null;
     });
+    final startedAt = DateTime.now();
+    final requestId = transactionRequestId('kantin', [
+      anak.id,
+      _unitUsaha!.kode,
+      nominal,
+    ]);
 
     try {
-      final hasil = await context.read<WaliApi>().bayarKantin(
-        anak.id,
-        _unitUsaha!.kode,
-        nominal,
-        pin: pin,
+      final hasil = await runWithTransactionProgress(
+        context,
+        message:
+            'Sedang memproses pembayaran. Jangan tutup aplikasi atau membayar ulang.',
+        action: () => context.read<WaliApi>().bayarKantin(
+          anak.id,
+          _unitUsaha!.kode,
+          nominal,
+          pin: pin,
+          requestId: requestId,
+        ),
       );
       if (!mounted) return;
 
@@ -213,6 +227,49 @@ class _ScanBayarScreenState extends State<ScanBayarScreen> {
 
       if (mounted) Navigator.of(context).pop();
     } on ApiException catch (e) {
+      if (e.statusCode == null && mounted) {
+        try {
+          final transaksi = await runWithTransactionProgress(
+            context,
+            message:
+                'Koneksi terputus. Sedang memastikan hasil pembayaran...',
+            action: () => context.read<WaliApi>().getTransaksi(anak.id),
+          );
+          final tercatat = transaksi.any(
+            (item) =>
+                item.jenis == 'pembayaran_kantin' &&
+                item.nominal == nominal &&
+                item.createdAt.isAfter(
+                  startedAt.subtract(const Duration(seconds: 30)),
+                ),
+          );
+          if (tercatat && mounted) {
+            await showSuccessDialog(
+              context,
+              title: 'Pembayaran Terkonfirmasi',
+              subtitle:
+                  'Server telah mencatat pembayaran meskipun koneksi sempat terputus.',
+              rincian: [
+                ('Kantin', _unitUsaha!.nama),
+                ('Nominal', formatRupiah(nominal)),
+              ],
+              sinkronkan: () =>
+                  context.read<AnakProvider>().refreshSaldoSelected(),
+            );
+            if (mounted) Navigator.of(context).pop();
+            return;
+          }
+        } catch (_) {
+          // Leave the result guarded and explain that it must not be retried.
+        }
+        if (mounted) {
+          setState(
+            () => _payError =
+                'Hasil pembayaran belum dapat dipastikan. Jangan bayar ulang; periksa Riwayat Transaksi terlebih dahulu.',
+          );
+        }
+        return;
+      }
       setState(() => _payError = e.errorFor('nominal') ?? e.message);
     } finally {
       if (mounted) setState(() => _submitting = false);
