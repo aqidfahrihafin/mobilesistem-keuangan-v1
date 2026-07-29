@@ -35,6 +35,17 @@ dinormalisasi otomatis untuk mencegah URL ganda jika konfigurasi build keliru.
 Pastikan Laravel jalan duluan di komputer yang sama (`php artisan serve` di
 folder root repo ini, bukan folder `mobile/`).
 
+Untuk produksi dan migrasi hosting, utamakan subdomain API stabil. Jika alamat
+API memang berubah, build ulang secara eksplisit:
+
+```bash
+flutter build apk --release \
+  --dart-define=API_BASE_URL=https://api.example.id/api
+```
+
+Pergantian server dengan domain API yang tetap tidak memerlukan APK baru selama
+kontrak API tidak berubah.
+
 ### Login untuk uji coba
 
 Pakai akun yang sudah ada dari `php artisan migrate:fresh --seed` di sisi
@@ -90,6 +101,13 @@ web (login & kata sandi awalnya sama-sama No. KK keluarga tsb).
   pengguna tidak dialihkan ke browser saat membuka kwitansi.
 - Build release default mengarah ke `https://emall.apinsdigital.my.id/api` dan
   tetap dapat dioverride melalui `--dart-define=API_BASE_URL=...`.
+- Parser model santri, tagihan, dan transaksi menerima angka JSON maupun angka
+  berbentuk string serta fallback untuk field legacy opsional. Ini pertahanan
+  kompatibilitas; backend tetap wajib menormalkan ID/nominal menjadi JSON number
+  dan flag menjadi boolean melalui Laravel Resources.
+- Setelah migrasi hosting, uji login **dan** request terpisah untuk anak, saldo,
+  tagihan, serta transaksi. Panduan lengkap ada di halaman role Dev
+  `/dev/deployment` dan `docs/DEPLOYMENT-HOSTING.md` pada repository backend.
 
 ## Design system
 

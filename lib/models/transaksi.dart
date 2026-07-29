@@ -27,14 +27,19 @@ class TagihanRingkas {
   bool get sedangDicicil => status == 'sebagian';
 
   factory TagihanRingkas.fromJson(Map<String, dynamic> json) {
+    int readInt(Object? value) {
+      if (value is num) return value.toInt();
+      return int.tryParse(value?.toString() ?? '') ?? 0;
+    }
+
     return TagihanRingkas(
-      id: json['id'] as int,
-      jenisTagihanNama: json['jenis_tagihan_nama'] as String,
-      periodeLabel: json['periode_label'] as String,
-      nominal: (json['nominal'] as num).toInt(),
-      nominalTerbayar: (json['nominal_terbayar'] as num).toInt(),
-      sisa: (json['sisa'] as num).toInt(),
-      status: json['status'] as String,
+      id: readInt(json['id']),
+      jenisTagihanNama: json['jenis_tagihan_nama']?.toString() ?? 'Tagihan',
+      periodeLabel: json['periode_label']?.toString() ?? '-',
+      nominal: readInt(json['nominal']),
+      nominalTerbayar: readInt(json['nominal_terbayar']),
+      sisa: readInt(json['sisa']),
+      status: json['status']?.toString() ?? 'belum_lunas',
     );
   }
 }
@@ -56,10 +61,10 @@ class TransaksiReferensi {
 
   factory TransaksiReferensi.fromJson(Map<String, dynamic> json) {
     return TransaksiReferensi(
-      type: json['type'] as String,
-      nama: json['nama'] as String,
-      nis: json['nis'] as String?,
-      kode: json['kode'] as String?,
+      type: json['type']?.toString() ?? '',
+      nama: json['nama']?.toString() ?? '-',
+      nis: json['nis']?.toString(),
+      kode: json['kode']?.toString(),
     );
   }
 }
@@ -126,28 +131,53 @@ class Transaksi {
     final tagihanJson = json['tagihan'] as Map<String, dynamic>?;
     final referensiJson = json['referensi'] as Map<String, dynamic>?;
 
+    int readInt(Object? value) {
+      if (value is num) return value.toInt();
+      return int.tryParse(value?.toString() ?? '') ?? 0;
+    }
+
+    int? readNullableInt(Object? value) {
+      if (value == null) return null;
+      if (value is num) return value.toInt();
+      return int.tryParse(value.toString());
+    }
+
+    bool? readNullableBool(Object? value) {
+      if (value == null) return null;
+      if (value is bool) return value;
+      if (value == 1 || value.toString() == '1' || value.toString() == 'true') {
+        return true;
+      }
+      if (value == 0 || value.toString() == '0' || value.toString() == 'false') {
+        return false;
+      }
+      return null;
+    }
+
     return Transaksi(
-      id: json['id'] as int,
-      uuid: json['uuid'] as String,
-      jenis: json['jenis'] as String,
-      arah: json['arah'] as String,
-      nominal: (json['nominal'] as num).toInt(),
-      saldoSebelum: (json['saldo_sebelum'] as num).toInt(),
-      saldoSesudah: (json['saldo_sesudah'] as num).toInt(),
-      status: json['status'] as String,
-      metode: json['metode'] as String,
-      metodeDetail: json['metode_detail'] as String?,
-      biayaMidtrans: (json['biaya_midtrans'] as num?)?.toInt(),
-      biayaDitanggungWali: json['biaya_ditanggung_wali'] as bool?,
-      catatan: json['catatan'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
+      id: readInt(json['id']),
+      uuid: json['uuid']?.toString() ?? '',
+      jenis: json['jenis']?.toString() ?? 'penyesuaian',
+      arah: json['arah']?.toString() ?? 'debit',
+      nominal: readInt(json['nominal']),
+      saldoSebelum: readInt(json['saldo_sebelum']),
+      saldoSesudah: readInt(json['saldo_sesudah']),
+      status: json['status']?.toString() ?? 'berhasil',
+      metode: json['metode']?.toString() ?? 'sistem',
+      metodeDetail: json['metode_detail']?.toString(),
+      biayaMidtrans: readNullableInt(json['biaya_midtrans']),
+      biayaDitanggungWali: readNullableBool(json['biaya_ditanggung_wali']),
+      catatan: json['catatan']?.toString(),
+      createdAt:
+          DateTime.tryParse(json['created_at']?.toString() ?? '')?.toLocal() ??
+          DateTime.fromMillisecondsSinceEpoch(0),
       tagihan: tagihanJson != null
           ? TagihanRingkas.fromJson(tagihanJson)
           : null,
       referensi: referensiJson != null
           ? TransaksiReferensi.fromJson(referensiJson)
           : null,
-      kwitansiId: (json['kwitansi_id'] as num?)?.toInt(),
+      kwitansiId: readNullableInt(json['kwitansi_id']),
     );
   }
 }

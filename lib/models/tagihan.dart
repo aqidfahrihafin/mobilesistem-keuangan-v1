@@ -38,21 +38,38 @@ class Tagihan {
   bool get adaDiskon => nominalSebelumDiskon != null && diskonPersen != null;
 
   factory Tagihan.fromJson(Map<String, dynamic> json) {
-    final jenisTagihan = json['jenis_tagihan'] as Map<String, dynamic>;
+    final jenisTagihan =
+        json['jenis_tagihan'] as Map<String, dynamic>? ?? const {};
+
+    int readInt(Object? value, {int fallback = 0}) {
+      if (value is num) return value.toInt();
+      return int.tryParse(value?.toString() ?? '') ?? fallback;
+    }
+
+    int? readNullableInt(Object? value) {
+      if (value == null) return null;
+      if (value is num) return value.toInt();
+      return int.tryParse(value.toString());
+    }
+
+    bool readBool(Object? value) {
+      if (value is bool) return value;
+      return value == 1 || value?.toString() == '1' || value?.toString() == 'true';
+    }
 
     return Tagihan(
-      id: json['id'] as int,
-      jenisTagihanKode: jenisTagihan['kode'] as String,
-      jenisTagihanNama: jenisTagihan['nama'] as String,
-      bisaDicicil: jenisTagihan['bisa_dicicil'] as bool? ?? false,
-      periodeLabel: json['periode_label'] as String,
-      nominal: (json['nominal'] as num).toInt(),
-      nominalSebelumDiskon: (json['nominal_sebelum_diskon'] as num?)?.toInt(),
-      diskonPersen: (json['diskon_persen'] as num?)?.toInt(),
-      nominalTerbayar: (json['nominal_terbayar'] as num).toInt(),
-      sisa: (json['sisa'] as num).toInt(),
-      status: json['status'] as String,
-      jatuhTempo: json['jatuh_tempo'] as String?,
+      id: readInt(json['id']),
+      jenisTagihanKode: jenisTagihan['kode']?.toString() ?? '-',
+      jenisTagihanNama: jenisTagihan['nama']?.toString() ?? 'Tagihan',
+      bisaDicicil: readBool(jenisTagihan['bisa_dicicil']),
+      periodeLabel: json['periode_label']?.toString() ?? '-',
+      nominal: readInt(json['nominal']),
+      nominalSebelumDiskon: readNullableInt(json['nominal_sebelum_diskon']),
+      diskonPersen: readNullableInt(json['diskon_persen']),
+      nominalTerbayar: readInt(json['nominal_terbayar']),
+      sisa: readInt(json['sisa']),
+      status: json['status']?.toString() ?? 'belum_lunas',
+      jatuhTempo: json['jatuh_tempo']?.toString(),
     );
   }
 }
