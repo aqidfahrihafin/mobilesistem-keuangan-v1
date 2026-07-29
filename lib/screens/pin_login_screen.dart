@@ -61,6 +61,16 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
       return;
     }
 
+    final quickLoginError = auth.quickLoginError;
+    if (quickLoginError != null) {
+      setState(() {
+        _pin = '';
+        _busy = false;
+        _error = quickLoginError;
+      });
+      return;
+    }
+
     _attempts++;
     if (_attempts >= 5) {
       await auth.usePasswordInsteadOfPin();

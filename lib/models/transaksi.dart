@@ -84,11 +84,17 @@ class TransaksiSantri {
 
   factory TransaksiSantri.fromJson(Map<String, dynamic> json) {
     final rawId = json['id'];
+    final rawLembaga = json['lembaga'];
     return TransaksiSantri(
       id: rawId is num ? rawId.toInt() : int.tryParse('$rawId') ?? 0,
       nama: json['nama']?.toString() ?? '-',
       nis: json['nis']?.toString(),
-      lembaga: json['lembaga']?.toString(),
+      // New API versions return the institution name directly. Keep this
+      // map fallback so a mobile release remains readable while a hosting
+      // deployment is briefly still serving the older object-shaped value.
+      lembaga: rawLembaga is Map
+          ? rawLembaga['nama']?.toString()
+          : rawLembaga?.toString(),
     );
   }
 }
