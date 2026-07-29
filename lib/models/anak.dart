@@ -45,22 +45,31 @@ class Anak {
   }
 
   factory Anak.fromJson(Map<String, dynamic> json) {
+    int readInt(Object? value, {int fallback = 0}) {
+      if (value is num) return value.toInt();
+      return int.tryParse(value?.toString() ?? '') ?? fallback;
+    }
+
+    String readString(Object? value, {String fallback = ''}) {
+      return value?.toString() ?? fallback;
+    }
+
     return Anak(
-      id: json['id'] as int,
-      nis: json['nis'] as String,
-      nama: json['nama'] as String,
-      jenisKelamin: json['jenis_kelamin'] as String?,
-      tempatLahir: json['tempat_lahir'] as String?,
-      tanggalLahir: json['tanggal_lahir'] as String?,
-      alamat: json['alamat'] as String?,
-      status: json['status'] as String,
-      lembaga: json['lembaga'] as String?,
-      fotoUrl: json['foto_url'] as String?,
+      id: readInt(json['id']),
+      nis: readString(json['nis'], fallback: '-'),
+      nama: readString(json['nama'], fallback: 'Santri'),
+      jenisKelamin: json['jenis_kelamin']?.toString(),
+      tempatLahir: json['tempat_lahir']?.toString(),
+      tanggalLahir: json['tanggal_lahir']?.toString(),
+      alamat: json['alamat']?.toString(),
+      status: readString(json['status'], fallback: 'aktif'),
+      lembaga: json['lembaga']?.toString(),
+      fotoUrl: json['foto_url']?.toString(),
       // Tolerant of a missing/null saldo (e.g. a santri with no
       // SaldoSantri row yet) - defaults to 0 rather than crashing the
       // whole anak list over one santri's balance not being ready yet.
-      saldo: (json['saldo'] as num?)?.toInt() ?? 0,
-      hubungan: json['hubungan'] as String?,
+      saldo: readInt(json['saldo']),
+      hubungan: json['hubungan']?.toString(),
     );
   }
 }
