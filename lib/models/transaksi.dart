@@ -69,6 +69,30 @@ class TransaksiReferensi {
   }
 }
 
+class TransaksiSantri {
+  final int id;
+  final String nama;
+  final String? nis;
+  final String? lembaga;
+
+  TransaksiSantri({
+    required this.id,
+    required this.nama,
+    this.nis,
+    this.lembaga,
+  });
+
+  factory TransaksiSantri.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    return TransaksiSantri(
+      id: rawId is num ? rawId.toInt() : int.tryParse('$rawId') ?? 0,
+      nama: json['nama']?.toString() ?? '-',
+      nis: json['nis']?.toString(),
+      lembaga: json['lembaga']?.toString(),
+    );
+  }
+}
+
 class Transaksi {
   final int id;
   final String uuid;
@@ -98,6 +122,7 @@ class Transaksi {
   final DateTime createdAt;
   final TagihanRingkas? tagihan;
   final TransaksiReferensi? referensi;
+  final TransaksiSantri? santri;
 
   /// Present once a kwitansi resmi has been issued for this transaksi
   /// (pembayaran_tagihan from saldo, pembayaran_kantin) - null for every
@@ -122,6 +147,7 @@ class Transaksi {
     required this.createdAt,
     this.tagihan,
     this.referensi,
+    this.santri,
     this.kwitansiId,
   });
 
@@ -130,6 +156,7 @@ class Transaksi {
   factory Transaksi.fromJson(Map<String, dynamic> json) {
     final tagihanJson = json['tagihan'] as Map<String, dynamic>?;
     final referensiJson = json['referensi'] as Map<String, dynamic>?;
+    final santriJson = json['santri'] as Map<String, dynamic>?;
 
     int readInt(Object? value) {
       if (value is num) return value.toInt();
@@ -176,6 +203,9 @@ class Transaksi {
           : null,
       referensi: referensiJson != null
           ? TransaksiReferensi.fromJson(referensiJson)
+          : null,
+      santri: santriJson != null
+          ? TransaksiSantri.fromJson(santriJson)
           : null,
       kwitansiId: readNullableInt(json['kwitansi_id']),
     );

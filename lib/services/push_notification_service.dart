@@ -35,8 +35,56 @@ class PushNotificationService {
   final _localNotifications = FlutterLocalNotificationsPlugin();
 
   String? _currentToken;
+  Map<String, dynamic>? _pendingDestination;
+  bool _pendingInbox = false;
+  bool Function()? _authenticationReady;
 
   PushNotificationService(this._waliApi, this.navigatorKey);
+
+  void setAuthenticationReadyCheck(bool Function() check) {
+    _authenticationReady = check;
+  }
+
+  /// Authentication can finish after an OS notification tap (cold start,
+  /// expired session, PIN/biometric lock). Keep the destination until the
+  /// auth gate is genuinely ready instead of firing an API request that
+  /// immediately receives 401 and loses the deep link.
+  void openPendingIfReady() {
+    if (!(_authenticationReady?.call() ?? false)) return;
+    final data = _pendingDestination;
+    if (data == null && !_pendingInbox) return;
+    final navigator = navigatorKey.currentState;
+    if (navigator == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => openPendingIfReady());
+      return;
+    }
+
+    _pendingDestination = null;
+    final openInbox = _pendingInbox;
+    _pendingInbox = false;
+    navigator.popUntil((route) => route.isFirst);
+    if (openInbox && data == null) {
+      navigator.push(
+        MaterialPageRoute<void>(builder: (_) => const NotificationsScreen()),
+      );
+      return;
+    }
+    if (data == null) return;
+    navigator.push(
+      MaterialPageRoute<void>(
+        builder: (_) => NotificationDestinationScreen(
+          item: NotificationItem(
+            id: 0,
+            title: data['_title']?.toString() ?? 'Notifikasi',
+            body: data['_body']?.toString() ?? '',
+            type: data['type']?.toString() ?? 'info',
+            data: data,
+            createdAt: DateTime.now(),
+          ),
+        ),
+      ),
+    );
+  }
 
   // A getter, not a field initialized at construction time - accessing
   // FirebaseMessaging.instance requires Firebase.initializeApp() to have
@@ -160,31 +208,14 @@ class PushNotificationService {
   }
 
   void _openNotificationDestination(Map<String, dynamic> data) {
-    final navigator = navigatorKey.currentState;
-    if (navigator == null) return;
-    navigator.popUntil((route) => route.isFirst);
-    navigator.push(
-      MaterialPageRoute<void>(
-        builder: (_) => NotificationDestinationScreen(
-          item: NotificationItem(
-            id: 0,
-            title: data['_title']?.toString() ?? 'Notifikasi',
-            body: data['_body']?.toString() ?? '',
-            type: data['type']?.toString() ?? 'info',
-            data: data,
-            createdAt: DateTime.now(),
-          ),
-        ),
-      ),
-    );
+    _pendingInbox = false;
+    _pendingDestination = Map<String, dynamic>.from(data);
+    openPendingIfReady();
   }
 
   void _openNotificationInbox() {
-    final navigator = navigatorKey.currentState;
-    if (navigator == null) return;
-    navigator.popUntil((route) => route.isFirst);
-    navigator.push(
-      MaterialPageRoute<void>(builder: (_) => const NotificationsScreen()),
-    );
+    _pendingDestination = null;
+    _pendingInbox = true;
+    openPendingIfReady();
   }
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../models/wali_user.dart';
@@ -42,6 +43,9 @@ class AuthService extends ChangeNotifier {
 
   AuthService(this._api, this._biometric, this._push) {
     _api.setUnauthorizedHandler(_handleUnauthorized);
+    _push.setAuthenticationReadyCheck(
+      () => isLoggedIn && !_needsPinUnlock && !_needsBiometricUnlock,
+    );
   }
 
   WaliUser? get user => _user;
@@ -102,6 +106,7 @@ class AuthService extends ChangeNotifier {
       if (_user != null && !_hasOnboarded) {
         await completeOnboarding();
       }
+      _openPendingPush();
     } catch (error, stackTrace) {
       // Secure storage can fail on a small subset of devices after an app
       // restore/keystore change. Treat that as no resumable session instead
@@ -141,6 +146,7 @@ class AuthService extends ChangeNotifier {
     _api.setToken(_token);
     unawaited(_push.registerCurrentToken());
     notifyListeners();
+    _openPendingPush();
   }
 
   /// Only meant to be called after BiometricService.authenticate() has
@@ -192,6 +198,7 @@ class AuthService extends ChangeNotifier {
     _needsBiometricUnlock = false;
     _sessionNotice = null;
     notifyListeners();
+    _openPendingPush();
     return true;
   }
 
@@ -203,6 +210,7 @@ class AuthService extends ChangeNotifier {
       _needsPinUnlock = false;
       _sessionNotice = null;
       notifyListeners();
+      _openPendingPush();
     }
 
     return result;
@@ -226,6 +234,7 @@ class AuthService extends ChangeNotifier {
       _user = WaliUser.fromJson(data as Map<String, dynamic>);
       unawaited(_push.registerCurrentToken());
       notifyListeners();
+      _openPendingPush();
       return BiometricAuthResult.success;
     } catch (_) {
       await _clearSession();
@@ -245,6 +254,7 @@ class AuthService extends ChangeNotifier {
       _needsBiometricUnlock = false;
       unawaited(_push.registerCurrentToken());
       notifyListeners();
+      _openPendingPush();
       return true;
     } catch (_) {
       await _clearSession();
@@ -372,6 +382,12 @@ class AuthService extends ChangeNotifier {
     await _storage.delete(key: 'token');
     await _storage.delete(key: _loginPinKey);
     _loginPin = null;
+  }
+
+  void _openPendingPush() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _push.openPendingIfReady();
+    });
   }
 
   String _deviceName() {

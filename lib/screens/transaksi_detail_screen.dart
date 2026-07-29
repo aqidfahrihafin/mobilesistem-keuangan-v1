@@ -5,9 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../models/anak.dart';
 import '../models/transaksi.dart';
-import '../providers/anak_provider.dart';
 import '../providers/app_info_provider.dart';
 import '../services/wali_api.dart';
 import '../utils/formatters.dart';
@@ -470,7 +468,7 @@ class _TransaksiDetailScreenState extends State<TransaksiDetailScreen> {
                             if (tx.jenis == 'transfer_antar_santri' &&
                                 tx.referensi != null) ...[
                               _DariKeTimeline(
-                                self: context.watch<AnakProvider>().selected,
+                                self: tx.santri,
                                 other: tx.referensi!,
                                 selfIsPengirim: !tx.isKredit,
                                 iconBg: iconBg,
@@ -616,14 +614,13 @@ class _TransaksiDetailScreenState extends State<TransaksiDetailScreen> {
   }
 }
 
-/// Both sides of a transfer antar santri - "self" (the santri whose ledger
-/// this Transaksi belongs to, from AnakProvider - not carried on the
-/// Transaksi payload itself since the API already scopes the list to one
-/// santri) and "other" (Transaksi.referensi, the sibling on the other end).
+/// Both sides of a transfer antar santri - "self" is the owner embedded in
+/// the transaction payload, never the globally selected child. This matters
+/// when a notification opens child A's transaction while child B is active.
 /// [selfIsPengirim] follows Transaksi.arah: a debit means money left self
 /// for other (self = Dari, other = Ke); a kredit means the reverse.
 class _DariKeTimeline extends StatelessWidget {
-  final Anak? self;
+  final TransaksiSantri? self;
   final TransaksiReferensi other;
   final bool selfIsPengirim;
   final Color iconBg;
