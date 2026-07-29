@@ -218,16 +218,16 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Removes the local PIN and returns to the regular credential screen
-  /// without revoking the retained session. Biometric quick login remains
-  /// available when enabled.
+  /// Leaves quick-login mode and returns to the regular credential screen
+  /// without revoking the retained server session. PIN and biometric are a
+  /// single convenience/security preference: choosing "Gunakan Password"
+  /// (also invoked after five wrong PIN attempts) disables both, so there
+  /// is no second quick-login path silently left active.
   Future<void> usePasswordInsteadOfPin() async {
-    _loginPin = null;
     _needsPinUnlock = false;
     _needsBiometricUnlock = false;
     _user = null;
-    await _storage.delete(key: _loginPinKey);
-    if (!_biometricEnabled) await _forgetQuickLoginOwner();
+    await _clearQuickLogin();
     notifyListeners();
   }
 
