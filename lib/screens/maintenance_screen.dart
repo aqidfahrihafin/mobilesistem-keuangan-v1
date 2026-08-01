@@ -13,80 +13,58 @@ class MaintenanceScreen extends StatelessWidget {
     final expected = maintenance.expectedEndAt;
 
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const _MaintenanceIllustration(),
-                  const SizedBox(height: 22),
-                  const _MaintenanceBadge(),
-                  const SizedBox(height: 14),
-                  Text(
-                    'Layanan sedang kami siapkan',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontSize: 25,
-                      height: 1.22,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    maintenance.message,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.muted,
-                      height: 1.55,
-                    ),
-                  ),
-                  if (expected != null) ...[
-                    const SizedBox(height: 20),
-                    _EstimateCard(expected: expected),
-                  ],
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: FilledButton.icon(
-                      onPressed: maintenance.checking
-                          ? null
-                          : () => maintenance.check(),
-                      icon: maintenance.checking
-                          ? const SizedBox.square(
-                              dimension: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.refresh_rounded),
-                      label: Text(
-                        maintenance.checking ? 'Memeriksa...' : 'Coba Lagi',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.verified_user_outlined,
-                        size: 16,
-                        color: AppColors.primary,
-                      ),
-                      const SizedBox(width: 7),
-                      Flexible(
-                        child: Text(
-                          'Data tetap aman. Aplikasi terbuka otomatis setelah layanan normal.',
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFF5FAF9), Color(0xFFFBFCFC)],
+          ),
+        ),
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - 42,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 440),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const _MaintenanceIllustration(),
+                        const SizedBox(height: 8),
+                        const _MaintenanceBadge(),
+                        const SizedBox(height: 14),
+                        Text(
+                          'Kami segera kembali',
                           textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: AppColors.muted),
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontSize: 27, height: 1.18),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 10),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(
+                            maintenance.message,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: AppColors.muted, height: 1.5),
+                          ),
+                        ),
+                        const SizedBox(height: 22),
+                        _StatusPanel(
+                          expected: expected,
+                          checking: maintenance.checking,
+                          onRetry: maintenance.check,
+                        ),
+                      ],
+                    ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -133,51 +111,107 @@ class _MaintenanceBadge extends StatelessWidget {
   }
 }
 
-class _EstimateCard extends StatelessWidget {
-  final DateTime expected;
+class _StatusPanel extends StatelessWidget {
+  final DateTime? expected;
+  final bool checking;
+  final VoidCallback onRetry;
 
-  const _EstimateCard({required this.expected});
+  const _StatusPanel({
+    required this.expected,
+    required this.checking,
+    required this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.surface,
         border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(22),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0D0F766E),
-            blurRadius: 16,
-            offset: Offset(0, 7),
+            color: Color(0x120F766E),
+            blurRadius: 26,
+            offset: Offset(0, 10),
           ),
         ],
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Column(
         children: [
-          const Icon(
-            Icons.schedule_rounded,
-            size: 20,
-            color: AppColors.primary,
-          ),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Perkiraan selesai',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.muted,
-                  fontSize: 11,
+          if (expected != null) ...[
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE7F4F2),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.schedule_rounded,
+                    color: AppColors.primary,
+                  ),
                 ),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Perkiraan layanan kembali',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.muted,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${_formatDate(expected!)} WIB',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Divider(height: 1),
+            const SizedBox(height: 16),
+          ],
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: FilledButton.icon(
+              onPressed: checking ? null : onRetry,
+              icon: checking
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh_rounded),
+              label: Text(checking ? 'Memeriksa layanan...' : 'Periksa Lagi'),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              const Icon(
+                Icons.shield_outlined,
+                size: 17,
+                color: AppColors.primary,
               ),
-              const SizedBox(height: 2),
-              Text(
-                '${_formatDate(expected)} WIB',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Data Anda tetap aman selama pemeliharaan.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.muted,
+                  ),
                 ),
               ),
             ],
@@ -204,21 +238,21 @@ class _MaintenanceIllustration extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 250,
+      height: 218,
       child: Stack(
         alignment: Alignment.center,
         children: [
           Container(
-            width: 224,
-            height: 224,
+            width: 194,
+            height: 194,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               color: Color(0xFFE5F3F1),
             ),
           ),
           Positioned(
-            top: 24,
-            right: 62,
+            top: 19,
+            right: 70,
             child: Container(
               width: 28,
               height: 28,
@@ -230,7 +264,7 @@ class _MaintenanceIllustration extends StatelessWidget {
           ),
           Image.asset(
             'assets/images/maintenance-secure-transparent.png',
-            height: 244,
+            height: 212,
             fit: BoxFit.contain,
             filterQuality: FilterQuality.high,
             gaplessPlayback: true,
