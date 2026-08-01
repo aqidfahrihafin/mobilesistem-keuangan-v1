@@ -83,6 +83,7 @@ flutter:
     - assets/images/onboarding-tagihan-transparent.webp
     - assets/images/onboarding-laporan-transparent.webp
     - assets/images/onboarding-keamanan-transparent.webp
+    - assets/images/maintenance-secure-transparent.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
