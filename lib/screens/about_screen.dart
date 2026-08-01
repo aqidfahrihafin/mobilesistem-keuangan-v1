@@ -38,14 +38,27 @@ class AboutScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
         children: [
-          Center(
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 22),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE2E8E4)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x080F172A),
+                  blurRadius: 18,
+                  offset: Offset(0, 6),
+                ),
+              ],
+            ),
             child: Column(
               children: [
                 Container(
                   width: 96,
                   height: 96,
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
+                    borderRadius: BorderRadius.circular(26),
                     gradient: const LinearGradient(
                       colors: [_teal, _tealDark],
                       begin: Alignment.topLeft,
@@ -98,7 +111,7 @@ class AboutScreen extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 16),
           FlatCard(
             color: Colors.white,
             child: Column(
@@ -117,7 +130,7 @@ class AboutScreen extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           const Padding(
             padding: EdgeInsets.only(left: 4, bottom: 10),
             child: Text(
@@ -170,7 +183,7 @@ class AboutScreen extends StatelessWidget {
                 )
                 .toList(),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 16),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(18),

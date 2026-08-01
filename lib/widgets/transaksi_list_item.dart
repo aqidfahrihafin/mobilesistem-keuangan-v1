@@ -10,12 +10,20 @@ const _kuning = Color(0xFFB45309);
 const _teal = Color(0xFF0F766E);
 
 (IconData, Color) _iconFor(Transaksi tx) => switch (tx.jenis) {
-  'topup_tunai' || 'topup_transfer_wali' => (Icons.arrow_downward_rounded, _hijau),
+  'topup_tunai' ||
+  'topup_transfer_wali' => (Icons.arrow_downward_rounded, _hijau),
   'pembayaran_kantin' => (Icons.storefront_rounded, _kuning),
   'pembayaran_tagihan' => (Icons.receipt_long_rounded, _merah),
   'penarikan_tunai' => (Icons.arrow_upward_rounded, _merah),
   'transfer_antar_santri' => (Icons.swap_horiz_rounded, _teal),
-  _ => (tx.isKredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded, Colors.grey),
+  'transfer_ke_tabungan' ||
+  'setoran_tunai' ||
+  'setoran_dari_saldo' ||
+  'setoran_midtrans' => (Icons.savings_outlined, const Color(0xFF6D28D9)),
+  _ => (
+    tx.isKredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+    Colors.grey,
+  ),
 };
 
 String _subtitleFor(Transaksi tx) {
@@ -36,6 +44,14 @@ String _subtitleFor(Transaksi tx) {
       return metodeTopupByKode(tx.metodeDetail)?.label ?? 'Transfer wali';
     case 'penarikan_tunai':
       return 'Tunai';
+    case 'transfer_ke_tabungan':
+      return 'Dari saldo belanja';
+    case 'setoran_tunai':
+      return tx.metode == 'petugas'
+          ? 'Tunai melalui petugas kios'
+          : 'Setoran tunai';
+    case 'setoran_midtrans':
+      return 'Melalui VA / QRIS';
     default:
       return jenisTransaksiLabel[tx.jenis] ?? tx.jenis;
   }
@@ -103,7 +119,10 @@ class TransaksiListItem extends StatelessWidget {
                   Text(
                     jenisTransaksiLabel[tx.jenis] ?? tx.jenis,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13.5,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -120,7 +139,11 @@ class TransaksiListItem extends StatelessWidget {
               children: [
                 Text(
                   '${tx.isKredit ? '+' : '-'}${formatRupiah(tx.nominal)}',
-                  style: TextStyle(color: amountColor, fontWeight: FontWeight.bold, fontSize: 13),
+                  style: TextStyle(
+                    color: amountColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -131,7 +154,11 @@ class TransaksiListItem extends StatelessWidget {
             ),
             if (showChevron) ...[
               const SizedBox(width: 2),
-              Icon(Icons.chevron_right_rounded, size: 16, color: Colors.grey[400]),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 16,
+                color: Colors.grey[400],
+              ),
             ],
           ],
         ),

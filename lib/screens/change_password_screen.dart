@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../services/api_client.dart';
 import '../services/auth_service.dart';
+import '../theme/app_theme.dart';
+import '../widgets/flat_card.dart';
 
 /// Shown either as a forced gate right after login (wajib=true, when the
 /// account's password is still the temporary one issued by admin - see
@@ -24,6 +26,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final _confirmController = TextEditingController();
 
   bool _loading = false;
+  bool _showCurrent = false;
+  bool _showPassword = false;
+  bool _showConfirmation = false;
   String? _currentError;
   String? _passwordError;
   String? _generalError;
@@ -70,7 +75,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F8F7),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Ganti Kata Sandi'),
         automaticallyImplyLeading: !widget.wajib,
@@ -83,6 +88,39 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                FlatCard(
+                  child: Row(
+                    children: [
+                      const CircleAvatar(
+                        radius: 27,
+                        backgroundColor: Color(0xFFE6F5F1),
+                        child: Icon(
+                          Icons.lock_reset_rounded,
+                          color: AppColors.primary,
+                          size: 27,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Amankan akun Anda',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Gunakan minimal 8 karakter yang tidak mudah ditebak.',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
                 if (widget.wajib)
                   Container(
                     padding: const EdgeInsets.all(14),
@@ -131,82 +169,101 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   ),
                   const SizedBox(height: 16),
                 ],
-                Text(
-                  'Kata Sandi Saat Ini',
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _currentController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    hintText: widget.wajib ? 'No. KK Anda' : '••••••••',
-                    errorText: _currentError,
-                  ),
-                  validator: (v) =>
-                      (v == null || v.isEmpty) ? 'Wajib diisi' : null,
-                ),
-                const SizedBox(height: 18),
-                const Text(
-                  'Kata Sandi Baru',
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    hintText: 'Minimal 8 karakter',
-                    errorText: _passwordError,
-                  ),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Wajib diisi';
-                    if (v.length < 8) return 'Minimal 8 karakter';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 18),
-                const Text(
-                  'Konfirmasi Kata Sandi Baru',
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _confirmController,
-                  obscureText: true,
-                  decoration: const InputDecoration(hintText: '••••••••'),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Wajib diisi';
-                    if (v != _passwordController.text) return 'Tidak cocok';
-                    return null;
-                  },
-                  onFieldSubmitted: (_) => _submit(),
-                ),
-                const SizedBox(height: 26),
-                SizedBox(
-                  height: 52,
-                  child: FilledButton(
-                    onPressed: _loading ? null : _submit,
-                    child: _loading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Ubah Kata Sandi',
-                            style: TextStyle(
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w600,
+                FlatCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextFormField(
+                        controller: _currentController,
+                        obscureText: !_showCurrent,
+                        decoration: InputDecoration(
+                          labelText: 'Kata sandi saat ini',
+                          prefixIcon: const Icon(Icons.key_rounded),
+                          suffixIcon: IconButton(
+                            onPressed: () =>
+                                setState(() => _showCurrent = !_showCurrent),
+                            icon: Icon(
+                              _showCurrent
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
                             ),
                           ),
+                          hintText: widget.wajib ? 'No. KK Anda' : '••••••••',
+                          errorText: _currentError,
+                        ),
+                        validator: (v) =>
+                            (v == null || v.isEmpty) ? 'Wajib diisi' : null,
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: !_showPassword,
+                        decoration: InputDecoration(
+                          labelText: 'Kata sandi baru',
+                          prefixIcon: const Icon(Icons.lock_outline_rounded),
+                          suffixIcon: IconButton(
+                            onPressed: () =>
+                                setState(() => _showPassword = !_showPassword),
+                            icon: Icon(
+                              _showPassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                            ),
+                          ),
+                          hintText: 'Minimal 8 karakter',
+                          errorText: _passwordError,
+                        ),
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'Wajib diisi';
+                          if (v.length < 8) return 'Minimal 8 karakter';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: _confirmController,
+                        obscureText: !_showConfirmation,
+                        decoration: InputDecoration(
+                          labelText: 'Konfirmasi kata sandi baru',
+                          hintText: '••••••••',
+                          prefixIcon: const Icon(Icons.verified_user_outlined),
+                          suffixIcon: IconButton(
+                            onPressed: () => setState(
+                              () => _showConfirmation = !_showConfirmation,
+                            ),
+                            icon: Icon(
+                              _showConfirmation
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                            ),
+                          ),
+                        ),
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'Wajib diisi';
+                          if (v != _passwordController.text) {
+                            return 'Tidak cocok';
+                          }
+                          return null;
+                        },
+                        onFieldSubmitted: (_) => _submit(),
+                      ),
+                    ],
                   ),
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: _loading ? null : _submit,
+                  icon: _loading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.shield_outlined, size: 18),
+                  label: Text(_loading ? 'Menyimpan...' : 'Ubah Kata Sandi'),
                 ),
               ],
             ),

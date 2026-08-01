@@ -24,7 +24,21 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
   String _pin = '';
   String? _error;
   bool _busy = false;
-  int _attempts = 0;
+  bool _biometricOtomatisDimulai = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.read<AuthService>();
+    if (!_biometricOtomatisDimulai &&
+        auth.biometricEnabled &&
+        (auth.isLoggedIn || auth.canUseBiometricLogin)) {
+      _biometricOtomatisDimulai = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _biometric();
+      });
+    }
+  }
 
   Future<void> _digit(String digit) async {
     if (_busy || _pin.length == 6) return;
@@ -53,6 +67,8 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
     if (!mounted) return;
 
     if (success) {
+      await auth.resetLoginPinAttemptsAfterSuccess();
+      if (!mounted) return;
       HapticFeedback.mediumImpact();
       context.read<TabIndexProvider>().go(0);
       if (widget.presentedAsRoute && Navigator.canPop(context)) {
@@ -71,16 +87,16 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
       return;
     }
 
-    _attempts++;
-    if (_attempts >= 5) {
-      await auth.usePasswordInsteadOfPin();
-      if (!mounted) return;
+    final forcedPassword = await auth.recordFailedLoginPinAttempt();
+    if (!mounted) return;
+    if (forcedPassword) {
       if (widget.presentedAsRoute && Navigator.canPop(context)) {
         Navigator.pop(context);
       }
       return;
     } else {
-      _error = 'PIN salah. Tersisa ${5 - _attempts} percobaan.';
+      _error =
+          'PIN salah. Tersisa ${5 - auth.loginPinFailedAttempts} percobaan.';
     }
     HapticFeedback.heavyImpact();
     setState(() {
@@ -128,6 +144,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
     final auth = context.watch<AuthService>();
     final canUseBiometric =
         auth.biometricEnabled && (auth.isLoggedIn || auth.canUseBiometricLogin);
+    final hanyaBiometrik = auth.biometricEnabled && !auth.loginPinEnabled;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -151,18 +168,22 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                         child: AppLogoImage(),
                       ),
                       const SizedBox(height: 22),
-                      const Text(
-                        'Masukkan PIN Anda',
-                        style: TextStyle(
+                      Text(
+                        hanyaBiometrik
+                            ? 'Verifikasi Sidik Jari'
+                            : 'Masukkan PIN Anda',
+                        style: const TextStyle(
                           fontSize: 21,
                           fontWeight: FontWeight.w700,
                           color: _ink,
                         ),
                       ),
                       const SizedBox(height: 7),
-                      const Text(
-                        'Gunakan 6 digit PIN untuk masuk ke akun',
-                        style: TextStyle(
+                      Text(
+                        hanyaBiometrik
+                            ? 'Gunakan sidik jari untuk membuka aplikasi'
+                            : 'Gunakan 6 digit PIN untuk masuk ke akun',
+                        style: const TextStyle(
                           fontSize: 12.5,
                           color: Color(0xFF7A869A),
                         ),
@@ -177,30 +198,31 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                         ),
                       ],
                       const SizedBox(height: 28),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          6,
-                          (index) => AnimatedContainer(
-                            duration: const Duration(milliseconds: 160),
-                            width: 18,
-                            height: 18,
-                            margin: const EdgeInsets.symmetric(horizontal: 8),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: index < _pin.length
-                                  ? _teal
-                                  : Colors.transparent,
-                              border: Border.all(
+                      if (!hanyaBiometrik)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            6,
+                            (index) => AnimatedContainer(
+                              duration: const Duration(milliseconds: 160),
+                              width: 18,
+                              height: 18,
+                              margin: const EdgeInsets.symmetric(horizontal: 8),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
                                 color: index < _pin.length
                                     ? _teal
-                                    : const Color(0xFFD9DEE7),
-                                width: 1.4,
+                                    : Colors.transparent,
+                                border: Border.all(
+                                  color: index < _pin.length
+                                      ? _teal
+                                      : const Color(0xFFD9DEE7),
+                                  width: 1.4,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
                       SizedBox(
                         height: 38,
                         child: Center(
@@ -220,12 +242,28 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                         constraints: const BoxConstraints(maxWidth: 320),
                         child: Column(
                           children: [
-                            _NumberPad(
-                              onDigit: _digit,
-                              onDelete: _delete,
-                              onBiometric: canUseBiometric ? _biometric : null,
-                              busy: _busy,
-                            ),
+                            if (!hanyaBiometrik)
+                              _NumberPad(
+                                onDigit: _digit,
+                                onDelete: _delete,
+                                onBiometric: canUseBiometric
+                                    ? _biometric
+                                    : null,
+                                busy: _busy,
+                              )
+                            else
+                              SizedBox(
+                                width: double.infinity,
+                                child: FilledButton.icon(
+                                  onPressed: _busy ? null : _biometric,
+                                  icon: const Icon(Icons.fingerprint_rounded),
+                                  label: Text(
+                                    _busy
+                                        ? 'Memverifikasi...'
+                                        : 'Gunakan Sidik Jari',
+                                  ),
+                                ),
+                              ),
                             const SizedBox(height: 20),
                             Padding(
                               padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),

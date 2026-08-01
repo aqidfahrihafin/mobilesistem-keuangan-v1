@@ -27,42 +27,94 @@ class EmptyStateView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconBoxSize = compact ? 44.0 : 64.0;
-    final iconSize = compact ? 20.0 : 30.0;
+    final iconBoxSize = compact ? 44.0 : 84.0;
+    final iconSize = compact ? 20.0 : 38.0;
 
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: compact ? 16 : 32, vertical: compact ? 8 : 0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    final content = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Stack(
+          clipBehavior: Clip.none,
           children: [
             Container(
               width: iconBoxSize,
               height: iconBoxSize,
-              decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: compact ? Colors.grey[100] : const Color(0xFFEAF5F3),
+                shape: BoxShape.circle,
+              ),
               alignment: Alignment.center,
-              child: Icon(icon, size: iconSize, color: Colors.grey[400]),
-            ),
-            SizedBox(height: compact ? 10 : 16),
-            if (!compact && title != null) ...[
-              Text(
-                title!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              child: Icon(
+                icon,
+                size: iconSize,
+                color: compact ? Colors.grey[400] : const Color(0xFF0F766E),
               ),
-              const SizedBox(height: 6),
+            ),
+            if (!compact) ...[
+              const Positioned(
+                top: 3,
+                right: -5,
+                child: _DecorativeDot(size: 14, color: Color(0xFFF4C95D)),
+              ),
+              const Positioned(
+                bottom: 5,
+                left: -8,
+                child: _DecorativeDot(size: 10, color: Color(0xFF7DD3C7)),
+              ),
             ],
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: compact ? 12 : (title != null ? 12.5 : 13),
-                height: 1.4,
-              ),
-            ),
           ],
         ),
+        SizedBox(height: compact ? 10 : 18),
+        if (!compact) ...[
+          Text(
+            title ?? 'Belum ada data',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+          ),
+          const SizedBox(height: 7),
+        ],
+        Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.grey[600],
+            fontSize: compact ? 12 : 13.5,
+            height: 1.5,
+          ),
+        ),
+      ],
+    );
+
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 16 : 24,
+          vertical: compact ? 8 : 24,
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: compact ? 360 : 310),
+          child: content,
+        ),
+      ),
+    );
+  }
+}
+
+class _DecorativeDot extends StatelessWidget {
+  final double size;
+  final Color color;
+
+  const _DecorativeDot({required this.size, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
       ),
     );
   }

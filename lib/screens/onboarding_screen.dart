@@ -8,12 +8,12 @@ const _teal = Color(0xFF0F766E);
 const _bg = Colors.transparent;
 
 class _Slide {
-  final IconData icon;
+  final String illustration;
   final String title;
   final String description;
 
   const _Slide({
-    required this.icon,
+    required this.illustration,
     required this.title,
     required this.description,
   });
@@ -21,25 +21,25 @@ class _Slide {
 
 const _slides = [
   _Slide(
-    icon: Icons.account_balance_wallet_rounded,
+    illustration: 'assets/images/onboarding-saldo-transparent.webp',
     title: 'Pantau Saldo Real-Time',
     description:
         'Cek saldo santri kapan saja, di mana saja, langsung dari genggaman Anda.',
   ),
   _Slide(
-    icon: Icons.receipt_long_rounded,
+    illustration: 'assets/images/onboarding-tagihan-transparent.webp',
     title: 'Bayar Tagihan Lebih Mudah',
     description:
         'Bayar tagihan pondok dari saldo atau langsung via transfer/QRIS, tanpa antre.',
   ),
   _Slide(
-    icon: Icons.bar_chart_rounded,
+    illustration: 'assets/images/onboarding-laporan-transparent.webp',
     title: 'Laporan yang Transparan',
     description:
         'Semua transaksi tercatat rapi, lengkap dengan laporan yang bisa diunduh sebagai evaluasi.',
   ),
   _Slide(
-    icon: Icons.fingerprint_rounded,
+    illustration: 'assets/images/onboarding-keamanan-transparent.webp',
     title: 'Aman dengan Sidik Jari',
     description:
         'Lindungi akun Anda dengan kunci sidik jari dan sesi otomatis logout saat tidak aktif.',
@@ -201,31 +201,21 @@ class _SlideView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 126,
-              height: 126,
-              decoration: BoxDecoration(
-                color: _teal.withValues(alpha: 0.07),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _teal.withValues(alpha: 0.1)),
-              ),
-              alignment: Alignment.center,
-              child: Container(
-                width: 76,
-                height: 76,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF169A8E), _teal],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(10),
+            SizedBox(
+              height: MediaQuery.sizeOf(context).height < 700 ? 210 : 280,
+              width: 330,
+              child: Semantics(
+                image: true,
+                label: slide.title,
+                child: Image.asset(
+                  slide.illustration,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                  gaplessPlayback: true,
                 ),
-                alignment: Alignment.center,
-                child: Icon(slide.icon, color: Colors.white, size: 34),
               ),
             ),
-            const SizedBox(height: 34),
+            const SizedBox(height: 16),
             Text(
               slide.title,
               textAlign: TextAlign.center,

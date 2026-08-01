@@ -36,11 +36,11 @@ class ApiException implements Exception {
 
 class ApiClient {
   String? _token;
-  FutureOr<void> Function()? _onUnauthorized;
+  FutureOr<bool> Function()? _onUnauthorized;
   bool _handlingUnauthorized = false;
 
   void setToken(String? token) => _token = token;
-  void setUnauthorizedHandler(FutureOr<void> Function() handler) {
+  void setUnauthorizedHandler(FutureOr<bool> Function() handler) {
     _onUnauthorized = handler;
   }
 
@@ -74,11 +74,63 @@ class ApiClient {
   Future<dynamic> post(String path, [Map<String, dynamic>? body]) =>
       _request('POST', path, body);
 
+  /// Request publik yang tidak membawa access token dan tidak memicu
+  /// pemulihan 401. Dipakai khusus untuk login dan rotasi token login cepat.
+  Future<dynamic> postPublic(String path, [Map<String, dynamic>? body]) =>
+      _request('POST', path, body, false, false);
+
   Future<dynamic> put(String path, [Map<String, dynamic>? body]) =>
       _request('PUT', path, body);
 
   Future<dynamic> delete(String path, [Map<String, dynamic>? body]) =>
       _request('DELETE', path, body);
+
+  Future<dynamic> postFile(
+    String path, {
+    required String field,
+    required String filePath,
+  }) async {
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('${ApiConfig.baseUrl}$path'),
+    )..headers['Accept'] = 'application/json';
+    if (_token != null) request.headers['Authorization'] = 'Bearer $_token';
+    request.files.add(await http.MultipartFile.fromPath(field, filePath));
+
+    try {
+      final streamed = await request.send().timeout(_requestTimeout);
+      final response = await http.Response.fromStream(streamed);
+      final decoded = response.body.isNotEmpty
+          ? jsonDecode(response.body)
+          : null;
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return decoded;
+      }
+      final errors = decoded is Map && decoded['errors'] is Map
+          ? (decoded['errors'] as Map).map(
+              (key, value) => MapEntry(
+                key.toString(),
+                value is List
+                    ? value.map((item) => item.toString()).toList()
+                    : [value.toString()],
+              ),
+            )
+          : null;
+      throw ApiException(
+        decoded is Map && decoded['message'] != null
+            ? decoded['message'].toString()
+            : _fallbackErrorMessage(response.statusCode),
+        errors: errors,
+        statusCode: response.statusCode,
+      );
+    } on SocketException {
+      throw ApiException(
+        'Tidak bisa terhubung ke server. Periksa koneksi internet Anda.',
+      );
+    } on TimeoutException {
+      throw ApiException('Unggah foto terlalu lama. Silakan coba lagi.');
+    }
+  }
 
   /// Downloads a public/signed binary resource without sending the API token.
   /// Used for short-lived kwitansi PDF URLs returned by the authenticated API.
@@ -109,12 +161,14 @@ class ApiClient {
     String method,
     String path, [
     Map<String, dynamic>? body,
+    bool kirimToken = true,
+    bool bolehPulihkan = true,
   ]) async {
     final uri = Uri.parse('${ApiConfig.baseUrl}$path');
     final headers = {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      if (_token != null) 'Authorization': 'Bearer $_token',
+      if (kirimToken && _token != null) 'Authorization': 'Bearer $_token',
     };
 
     http.Response response;
@@ -175,12 +229,16 @@ class ApiClient {
     }
 
     if (response.statusCode == 401) {
-      if (!_handlingUnauthorized && _token != null) {
+      if (bolehPulihkan && !_handlingUnauthorized && _token != null) {
         _handlingUnauthorized = true;
+        var pulih = false;
         try {
-          await _onUnauthorized?.call();
+          pulih = await _onUnauthorized?.call() ?? false;
         } finally {
           _handlingUnauthorized = false;
+        }
+        if (pulih) {
+          return _request(method, path, body, kirimToken, false);
         }
       }
       throw ApiException(
@@ -241,7 +299,8 @@ class ApiClient {
     return switch (statusCode) {
       403 => 'Anda tidak memiliki akses untuk melakukan tindakan ini.',
       404 => 'Data yang diminta tidak ditemukan atau sudah berubah.',
-      422 => 'Pembayaran ditolak. Periksa nominal, saldo, dan PIN lalu coba lagi.',
+      422 =>
+        'Pembayaran ditolak. Periksa nominal, saldo, dan PIN lalu coba lagi.',
       423 => 'PIN transaksi sementara dikunci. Silakan coba kembali nanti.',
       _ when statusCode >= 500 =>
         'Server sedang bermasalah. Silakan coba lagi beberapa saat.',

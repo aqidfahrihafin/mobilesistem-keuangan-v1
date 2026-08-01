@@ -26,6 +26,12 @@ const faqSections = <FaqSection>[
         answer:
             'Pondok menetapkan batas minimum saldo yang harus disisakan saat membayar tagihan dari saldo, agar santri tetap punya dana untuk kebutuhan sehari-hari. Batas ini bisa dilihat di halaman Beranda pada info saldo.',
       ),
+      FaqItem(
+        question:
+            'Top up berhasil tetapi saldo belum berubah, apa yang harus dilakukan?',
+        answer:
+            'Buka kembali detail pembayaran lalu tekan "Cek Status Sekarang". Jangan membuat pembayaran kedua sebelum status transaksi pertama dipastikan. Pembaruan saldo mengikuti konfirmasi resmi dari kanal pembayaran.',
+      ),
     ],
   ),
   FaqSection(
@@ -47,9 +53,15 @@ const faqSections = <FaqSection>[
             'Tidak. Karena dana tetap berada di lingkungan pondok (hanya berpindah antar santri, tidak ditarik keluar), transfer langsung berhasil begitu PIN Transaksi dikonfirmasi - tanpa menunggu persetujuan.',
       ),
       FaqItem(
-        question: 'Ke mana saya bisa melihat riwayat transfer yang sudah dilakukan?',
+        question:
+            'Ke mana saya bisa melihat riwayat transfer yang sudah dilakukan?',
         answer:
             'Transfer tercatat di riwayat kedua santri (pengirim dan penerima) pada menu Laporan, dengan jenis transaksi "Transfer Antar Santri".',
+      ),
+      FaqItem(
+        question: 'Apakah transfer yang sudah berhasil dapat dibatalkan?',
+        answer:
+            'Transfer yang sudah berhasil langsung tercatat pada saldo kedua santri dan tidak dapat dibatalkan dari aplikasi. Periksa nama penerima dan nominal pada layar konfirmasi sebelum memasukkan PIN.',
       ),
     ],
   ),
@@ -71,6 +83,31 @@ const faqSections = <FaqSection>[
         answer:
             'Buka detail tagihan yang sudah ada pembayarannya, lalu pilih cetak/unduh kwitansi. Kwitansi memiliki nomor resmi dan bisa disimpan sebagai PDF.',
       ),
+      FaqItem(
+        question: 'Kenapa tagihan belum muncul atau nominalnya berbeda?',
+        answer:
+            'Daftar tagihan mengikuti data yang diterbitkan pondok untuk santri terpilih. Tarik layar untuk memperbarui data. Jika tetap berbeda, hubungi pengurus dengan menyebut nama santri, periode, dan jenis tagihan.',
+      ),
+    ],
+  ),
+  FaqSection(
+    title: 'Tabungan Santri',
+    items: [
+      FaqItem(
+        question: 'Apa bedanya saldo dan tabungan santri?',
+        answer:
+            'Saldo digunakan untuk transaksi belanja dan pembayaran yang tersedia di aplikasi. Tabungan merupakan titipan terpisah, sehingga nilainya tidak tercampur dengan saldo belanja.',
+      ),
+      FaqItem(
+        question: 'Bagaimana cara memindahkan saldo ke tabungan?',
+        answer:
+            'Buka layanan Tabungan, pilih pindahkan dari saldo, masukkan nominal, lalu konfirmasi dengan PIN Transaksi. Batas minimum saldo tetap harus dipenuhi.',
+      ),
+      FaqItem(
+        question: 'Bisakah menyetor langsung ke tabungan melalui VA atau QRIS?',
+        answer:
+            'Bisa. Pada halaman Tabungan pilih Setor Tabungan, tentukan nominal dan kanal pembayaran. Dana yang berhasil dikonfirmasi masuk ke tabungan, bukan ke saldo belanja.',
+      ),
     ],
   ),
   FaqSection(
@@ -82,7 +119,8 @@ const faqSections = <FaqSection>[
             'Buka Profil, aktifkan "Login dengan Sidik Jari", lalu verifikasi sidik jari Anda satu kali untuk mengonfirmasi. Setelah aktif, tombol sidik jari akan muncul di halaman login.',
       ),
       FaqItem(
-        question: 'Kenapa aplikasi meminta verifikasi lagi setelah beberapa saat?',
+        question:
+            'Kenapa aplikasi meminta verifikasi lagi setelah beberapa saat?',
         answer:
             'Untuk keamanan, sesi akan terkunci otomatis setelah beberapa menit tidak ada aktivitas. Jika login sidik jari aktif, cukup verifikasi sidik jari untuk melanjutkan; jika tidak, Anda perlu masuk ulang dengan kata sandi.',
       ),
@@ -107,7 +145,8 @@ const faqSections = <FaqSection>[
             'Reset PIN Transaksi mandiri belum tersedia - sama seperti kata sandi, silakan hubungi pengurus pondok untuk mengatur ulang. Setelah direset, Anda akan diminta membuat PIN baru saat transaksi berikutnya.',
       ),
       FaqItem(
-        question: 'Kenapa muncul pesan "terlalu banyak percobaan" saat memasukkan PIN?',
+        question:
+            'Kenapa muncul pesan "terlalu banyak percobaan" saat memasukkan PIN?',
         answer:
             'Untuk mencegah tebakan berulang, PIN akan terkunci sementara (sekitar 15 menit) setelah 5 kali salah berturut-turut. Tunggu beberapa saat lalu coba lagi, atau hubungi pengurus pondok jika Anda yakin lupa PIN-nya.',
       ),
@@ -125,6 +164,16 @@ const faqSections = <FaqSection>[
         question: 'Bisakah laporan diunduh sebagai bukti/evaluasi?',
         answer:
             'Bisa. Buka tab "Laporan" di menu Laporan, pilih periode yang diinginkan, lalu ketuk "Unduh Laporan (PDF)" untuk mendapatkan ringkasan lengkap beserta rincian transaksinya.',
+      ),
+      FaqItem(
+        question: 'Kenapa detail notifikasi hanya tampil sebagai arsip?',
+        answer:
+            'Isi notifikasi tetap disimpan, tetapi data transaksi atau tagihan asal mungkin sudah berubah atau tidak tersedia pada database aktif. Periksa menu Laporan atau hubungi pengurus jika transaksi tersebut seharusnya masih ada.',
+      ),
+      FaqItem(
+        question: 'Apakah notifikasi tetap tersimpan jika push tidak muncul?',
+        answer:
+            'Ya. Push hanya kanal pengantar. Semua notifikasi yang berhasil dicatat server tetap tersedia melalui ikon lonceng meskipun izin notifikasi dimatikan, perangkat offline, atau token push perlu diperbarui.',
       ),
     ],
   ),

@@ -6,6 +6,7 @@ import '../services/wali_api.dart';
 import '../theme/app_theme.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/error_state_view.dart';
+import '../widgets/loading_state_view.dart';
 import 'notification_destination_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -45,7 +46,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _openItem(NotificationItem item) async {
     if (!item.isRead) {
-      await context.read<WaliApi>().readNotification(item.id);
+      // Reading is bookkeeping only; a temporary failure must not make the
+      // notification appear untappable.
+      try {
+        await context.read<WaliApi>().readNotification(item.id);
+      } catch (_) {}
     }
     if (!mounted) return;
 
@@ -75,7 +80,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const LoadingStateView(
+              title: 'Memuat notifikasi',
+              message: 'Kami sedang menyiapkan kabar terbaru untuk Anda.',
+              icon: Icons.notifications_active_outlined,
+            );
           }
           if (snapshot.hasError) {
             return ErrorStateView(error: snapshot.error!, onRetry: _reload);
@@ -97,7 +106,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 final item = items[index];
-                return _NotificationTile(item: item, onTap: () => _openItem(item));
+                return _NotificationTile(
+                  item: item,
+                  onTap: () => _openItem(item),
+                );
               },
             ),
           );

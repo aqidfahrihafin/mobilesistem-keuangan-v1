@@ -5,6 +5,7 @@ import '../models/anak.dart';
 import '../models/notification_item.dart';
 import '../models/tagihan.dart';
 import '../models/transaksi.dart';
+import '../services/api_client.dart';
 import '../services/wali_api.dart';
 import '../theme/app_theme.dart';
 import '../widgets/error_state_view.dart';
@@ -43,21 +44,28 @@ class _NotificationDestinationScreenState
     final transaksiId = _id('transaksi_id');
     final tagihanId = _id('tagihan_id');
 
-    if (santriId != null && transaksiId != null) {
-      return _Destination.transaksi(
-        await api.getTransaksiDetail(santriId, transaksiId),
-      );
-    }
+    try {
+      if (santriId != null && transaksiId != null) {
+        return _Destination.transaksi(
+          await api.getTransaksiDetail(santriId, transaksiId),
+        );
+      }
 
-    if (santriId != null && tagihanId != null) {
-      final results = await Future.wait<Object>([
-        api.getAnak(),
-        api.getTagihanDetail(santriId, tagihanId),
-      ]);
-      final anak = (results[0] as List<Anak>).firstWhere(
-        (item) => item.id == santriId,
-      );
-      return _Destination.tagihan(anak, results[1] as Tagihan);
+      if (santriId != null && tagihanId != null) {
+        final results = await Future.wait<Object>([
+          api.getAnak(),
+          api.getTagihanDetail(santriId, tagihanId),
+        ]);
+        final anak = (results[0] as List<Anak>).firstWhere(
+          (item) => item.id == santriId,
+        );
+        return _Destination.tagihan(anak, results[1] as Tagihan);
+      }
+    } on ApiException catch (error) {
+      if (error.statusCode == 404) {
+        return const _Destination.info(sourceUnavailable: true);
+      }
+      rethrow;
     }
 
     return const _Destination.info();
@@ -101,6 +109,25 @@ class _NotificationDestinationScreenState
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              if (destination.sourceUnavailable) ...[
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBEB),
+                    borderRadius: AppRadius.borderRadius,
+                    border: Border.all(color: const Color(0xFFFDE68A)),
+                  ),
+                  child: const Text(
+                    'Data transaksi atau tagihan asal sudah tidak tersedia, kemungkinan karena perubahan atau pemulihan database. Isi notifikasi tetap ditampilkan sebagai arsip.',
+                    style: TextStyle(
+                      color: Color(0xFF92400E),
+                      fontSize: 12.5,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
@@ -143,10 +170,17 @@ class _Destination {
   final Anak? anak;
   final Tagihan? tagihan;
   final Transaksi? transaksi;
+  final bool sourceUnavailable;
 
-  const _Destination._({this.anak, this.tagihan, this.transaksi});
+  const _Destination._({
+    this.anak,
+    this.tagihan,
+    this.transaksi,
+    this.sourceUnavailable = false,
+  });
 
-  const _Destination.info() : this._();
+  const _Destination.info({bool sourceUnavailable = false})
+      : this._(sourceUnavailable: sourceUnavailable);
 
   factory _Destination.tagihan(Anak anak, Tagihan tagihan) =>
       _Destination._(anak: anak, tagihan: tagihan);

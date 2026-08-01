@@ -80,7 +80,9 @@ class _SessionActivityGuardState extends State<SessionActivityGuard>
     _timer?.cancel();
 
     final auth = context.read<AuthService>();
-    if (auth.isLoggedIn && !auth.needsBiometricUnlock) {
+    if (auth.isLoggedIn &&
+        !auth.needsBiometricUnlock &&
+        !auth.needsPinUnlock) {
       auth.lockForInactivity();
     }
   }

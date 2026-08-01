@@ -18,19 +18,45 @@ class FaqScreen extends StatelessWidget {
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: _teal.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8E4)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.quiz_rounded, color: _teal, size: 20),
-                const SizedBox(width: 12),
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: _teal.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.quiz_rounded, color: _teal, size: 25),
+                ),
+                const SizedBox(width: 14),
                 Expanded(
-                  child: Text(
-                    'Pertanyaan yang sering diajukan seputar penggunaan aplikasi.',
-                    style: TextStyle(fontSize: 12.5, color: Colors.grey[800]),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Ada yang ingin ditanyakan?',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Temukan panduan fitur, pembayaran, keamanan, dan laporan.',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          height: 1.4,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -51,7 +77,7 @@ class FaqScreen extends StatelessWidget {
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: const Color(0xFFE9EBEF)),
               ),
               child: Column(

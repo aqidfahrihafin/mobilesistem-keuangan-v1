@@ -412,14 +412,15 @@ class _TagihanListState extends State<_TagihanList> {
                   children: [
                     Expanded(
                       child: ListView(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        padding: const EdgeInsets.fromLTRB(0, 8, 0, 112),
                         children: [
                           Container(
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: const Color(0xFFE2E8E4),
+                              borderRadius: BorderRadius.zero,
+                              border: const Border(
+                                top: BorderSide(color: Color(0xFFE2E8E4)),
+                                bottom: BorderSide(color: Color(0xFFE2E8E4)),
                               ),
                             ),
                             clipBehavior: Clip.antiAlias,
@@ -439,17 +440,15 @@ class _TagihanListState extends State<_TagihanList> {
                                         return _TagihanCard(
                                           key: ValueKey(tagihan.id),
                                           tagihan: tagihan,
-                                          onOpen: () =>
-                                              _bukaDetail(tagihan),
+                                          onOpen: () => _bukaDetail(tagihan),
                                           selectionMode: _selectionMode,
                                           selected: _selectedIds.contains(
                                             tagihan.id,
                                           ),
                                           onToggleSelected:
                                               (_selectionMode && payable)
-                                              ? () => _toggleSelected(
-                                                  tagihan.id,
-                                                )
+                                              ? () =>
+                                                    _toggleSelected(tagihan.id)
                                               : null,
                                         );
                                       },

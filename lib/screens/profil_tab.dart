@@ -44,14 +44,19 @@ class ProfilTab extends StatelessWidget {
                     CircleAvatar(
                       radius: 30,
                       backgroundColor: const Color(0xFFE6F5F1),
-                      child: Text(
-                        initial,
-                        style: const TextStyle(
-                          color: _teal,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 22,
-                        ),
-                      ),
+                      backgroundImage: user?.photoUrl != null
+                          ? NetworkImage(user!.photoUrl!)
+                          : null,
+                      child: user?.photoUrl == null
+                          ? Text(
+                              initial,
+                              style: const TextStyle(
+                                color: _teal,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 22,
+                              ),
+                            )
+                          : null,
                     ),
                     Positioned(
                       right: -4,

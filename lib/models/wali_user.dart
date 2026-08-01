@@ -3,6 +3,7 @@ class WaliUser {
   final String name;
   final String? email;
   final String? phone;
+  final String? photoUrl;
   final bool mustChangePassword;
 
   WaliUser({
@@ -10,6 +11,7 @@ class WaliUser {
     required this.name,
     this.email,
     this.phone,
+    this.photoUrl,
     required this.mustChangePassword,
   });
 
@@ -19,6 +21,7 @@ class WaliUser {
       name: json['name'] as String,
       email: json['email'] as String?,
       phone: json['phone'] as String?,
+      photoUrl: json['photo_url'] as String?,
       mustChangePassword: json['must_change_password'] as bool? ?? false,
     );
   }

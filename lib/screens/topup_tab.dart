@@ -34,7 +34,9 @@ const _nominalCepat = [100000, 200000, 300000, 400000, 500000];
 /// now a separate, explicit action from TagihanTab, either from saldo or
 /// via its own scoped Midtrans payment - see TagihanTopupScreen).
 class TopupTab extends StatefulWidget {
-  const TopupTab({super.key});
+  final bool untukTabungan;
+
+  const TopupTab({super.key, this.untukTabungan = false});
 
   @override
   State<TopupTab> createState() => _TopupTabState();
@@ -99,6 +101,49 @@ class _TopupTabState extends State<TopupTab> {
     });
   }
 
+  Future<void> _pilihMetodePembayaran() async {
+    final dipilih = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Pilih metode pembayaran',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Pilih satu kanal. Detail pembayaran ditampilkan setelah dikonfirmasi.',
+                style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+              ),
+              const SizedBox(height: 16),
+              for (final metode in daftarMetodeTopup)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: MetodeTile(
+                    metode: metode,
+                    selected: _metode == metode.kode,
+                    onTap: () => Navigator.pop(context, metode.kode),
+                    biayaEstimasi: _biaya?.dibebankanWali == true
+                        ? _biaya!.hitung(metode.kode, _nominalTerketik)
+                        : null,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (dipilih != null && mounted) setState(() => _metode = dipilih);
+  }
+
   Future<void> _mulaiTopup(int santriId) async {
     final form = _formKey.currentState;
     if (form != null && !form.validate()) return;
@@ -114,15 +159,14 @@ class _TopupTabState extends State<TopupTab> {
 
     try {
       final nominal = int.parse(_nominalController.text.replaceAll('.', ''));
+      final api = context.read<WaliApi>();
       final topup = await runWithTransactionProgress(
         context,
         message:
-            'Sedang membuat instruksi top up. Jangan tutup aplikasi atau menekan tombol berulang kali.',
-        action: () => context.read<WaliApi>().mulaiTopupCore(
-          santriId,
-          nominal,
-          _metode,
-        ),
+            'Sedang membuat instruksi pembayaran. Jangan tutup aplikasi atau menekan tombol berulang kali.',
+        action: () => widget.untukTabungan
+            ? api.mulaiSetoranTabunganMidtrans(santriId, nominal, _metode)
+            : api.mulaiTopupCore(santriId, nominal, _metode),
       );
       setState(() => _topup = topup);
     } on ApiException catch (e) {
@@ -162,16 +206,16 @@ class _TopupTabState extends State<TopupTab> {
         // from the provider - refreshSaldoSelected() below runs in the
         // background while the dialog is showing, so anak.saldo here is
         // still the pre-top-up value at the moment this list is built.
-        final saldoSetelah = anak != null
+        final saldoSetelah = anak != null && !widget.untukTabungan
             ? anak.saldo + updated.nominalDiminta
             : null;
 
         await showSuccessDialog(
           context,
-          title: 'Top Up Berhasil',
+          title: widget.untukTabungan ? 'Setoran Berhasil' : 'Top Up Berhasil',
           subtitle: anak != null
-              ? '${formatRupiah(updated.nominalDiminta)} telah masuk ke saldo ${anak.nama}.'
-              : '${formatRupiah(updated.nominalDiminta)} telah masuk ke saldo.',
+              ? '${formatRupiah(updated.nominalDiminta)} telah masuk ke ${widget.untukTabungan ? 'tabungan' : 'saldo'} ${anak.nama}.'
+              : '${formatRupiah(updated.nominalDiminta)} telah berhasil diterima.',
           rincian: [
             ('Nominal', formatRupiah(updated.nominalDiminta)),
             if (updated.biayaDitanggungWali && updated.biayaMidtrans > 0)
@@ -181,7 +225,9 @@ class _TopupTabState extends State<TopupTab> {
           ],
           // Fires while the dialog above is already showing, so the balance
           // card behind it is already fresh by the time "Selesai" is tapped.
-          sinkronkan: () => context.read<AnakProvider>().refreshSaldoSelected(),
+          sinkronkan: widget.untukTabungan
+              ? null
+              : () => context.read<AnakProvider>().refreshSaldoSelected(),
         );
       }
     } on ApiException catch (e) {
@@ -230,7 +276,7 @@ class _TopupTabState extends State<TopupTab> {
     return Scaffold(
       backgroundColor: _bg,
       appBar: AppBar(
-        title: const Text('Top Up Saldo'),
+        title: Text(widget.untukTabungan ? 'Setor Tabungan' : 'Top Up Saldo'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         elevation: 0,
@@ -262,119 +308,149 @@ class _TopupTabState extends State<TopupTab> {
                   SantriSummaryCard(anak: anak),
                   const SizedBox(height: 16),
                   if (_topup == null) ...[
-                    const Text(
-                      'Pilih Nominal Top Up',
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2E8E4)),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x080F172A),
+                            blurRadius: 12,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        const gap = 8.0;
-                        final itemWidth = (constraints.maxWidth - gap) / 2;
-
-                        return Wrap(
-                          spacing: gap,
-                          runSpacing: gap,
-                          children: [
-                            ..._nominalCepat.map(
-                              (nominal) => SizedBox(
-                                width: itemWidth,
-                                child: _NominalChip(
-                                  label: formatRupiah(nominal),
-                                  selected:
-                                      !_nominalLainnya &&
-                                      _nominalController.text ==
-                                          nominal.toString(),
-                                  onTap: () => _pilihNominalCepat(nominal),
-                                ),
-                              ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            widget.untukTabungan
+                                ? 'Pilih Nominal Setoran'
+                                : 'Pilih Nominal Top Up',
+                            style: const TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w700,
                             ),
-                            SizedBox(
-                              width: itemWidth,
-                              child: _NominalChip(
-                                label: 'Lainnya',
-                                selected: _nominalLainnya,
-                                onTap: _pilihNominalLainnya,
+                          ),
+                          const SizedBox(height: 12),
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              const gap = 8.0;
+                              final itemWidth =
+                                  (constraints.maxWidth - gap) / 2;
+
+                              return Wrap(
+                                spacing: gap,
+                                runSpacing: gap,
+                                children: [
+                                  ..._nominalCepat.map(
+                                    (nominal) => SizedBox(
+                                      width: itemWidth,
+                                      child: _NominalChip(
+                                        label: formatRupiah(nominal),
+                                        selected:
+                                            !_nominalLainnya &&
+                                            _nominalController.text ==
+                                                nominal.toString(),
+                                        onTap: () =>
+                                            _pilihNominalCepat(nominal),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: itemWidth,
+                                    child: _NominalChip(
+                                      label: 'Lainnya',
+                                      selected: _nominalLainnya,
+                                      onTap: _pilihNominalLainnya,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                          if (_nominalLainnya) ...[
+                            const SizedBox(height: 12),
+                            Form(
+                              key: _formKey,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAF9),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: const Color(0xFFB9D8D3),
+                                  ),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Padding(
+                                      padding: EdgeInsets.only(top: 9),
+                                      child: Text(
+                                        'Rp',
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w700,
+                                          color: _teal,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: _nominalController,
+                                        keyboardType: TextInputType.number,
+                                        autofocus: true,
+                                        style: const TextStyle(
+                                          fontSize: 25,
+                                          fontWeight: FontWeight.w800,
+                                          color: _teal,
+                                          letterSpacing: -0.5,
+                                        ),
+                                        decoration: InputDecoration(
+                                          isDense: true,
+                                          filled: false,
+                                          border: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          errorBorder: InputBorder.none,
+                                          focusedErrorBorder: InputBorder.none,
+                                          hintText: 'Minimal 10.000',
+                                          hintStyle: TextStyle(
+                                            color: _teal.withValues(alpha: 0.3),
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 18,
+                                          ),
+                                          errorMaxLines: 2,
+                                        ),
+                                        validator: (value) {
+                                          final nominal = int.tryParse(
+                                            (value ?? '').replaceAll('.', ''),
+                                          );
+                                          if (nominal == null) {
+                                            return 'Wajib diisi angka';
+                                          }
+                                          if (nominal < 10000) {
+                                            return 'Minimal Rp 10.000';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
-                        );
-                      },
-                    ),
-                    if (_nominalLainnya) ...[
-                      const SizedBox(height: 12),
-                      Form(
-                        key: _formKey,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFE2E8E4)),
-                          ),
-                          child: Row(
-                            children: [
-                              const Text(
-                                'Rp',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                  color: _teal,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: _nominalController,
-                                  keyboardType: TextInputType.number,
-                                  autofocus: true,
-                                  style: const TextStyle(
-                                    fontSize: 25,
-                                    fontWeight: FontWeight.w800,
-                                    color: _teal,
-                                    letterSpacing: -0.5,
-                                  ),
-                                  decoration: InputDecoration(
-                                    isDense: true,
-                                    filled: false,
-                                    border: InputBorder.none,
-                                    enabledBorder: InputBorder.none,
-                                    focusedBorder: InputBorder.none,
-                                    errorBorder: InputBorder.none,
-                                    focusedErrorBorder: InputBorder.none,
-                                    hintText: 'Minimal 10.000',
-                                    hintStyle: TextStyle(
-                                      color: _teal.withValues(alpha: 0.3),
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 18,
-                                    ),
-                                    errorMaxLines: 2,
-                                  ),
-                                  validator: (value) {
-                                    final nominal = int.tryParse(
-                                      (value ?? '').replaceAll('.', ''),
-                                    );
-                                    if (nominal == null) {
-                                      return 'Wajib diisi angka';
-                                    }
-                                    if (nominal < 10000) {
-                                      return 'Minimal Rp 10.000';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                     if (_nominalTerketik > 0) ...[
                       const SizedBox(height: 22),
                       const Text(
@@ -385,18 +461,79 @@ class _TopupTabState extends State<TopupTab> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      ...daftarMetodeTopup.map(
-                        (metode) => Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: MetodeTile(
-                            metode: metode,
-                            selected: _metode == metode.kode,
-                            onTap: () => setState(() => _metode = metode.kode),
-                            biayaEstimasi: _biaya?.dibebankanWali == true
-                                ? _biaya!.hitung(metode.kode, _nominalTerketik)
-                                : null,
-                          ),
-                        ),
+                      Builder(
+                        builder: (context) {
+                          final metode =
+                              metodeTopupByKode(_metode) ??
+                              daftarMetodeTopup.first;
+                          return Material(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            child: InkWell(
+                              onTap: _pilihMetodePembayaran,
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFFE2E8F0),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 42,
+                                      height: 42,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFE8F5F3),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        metode.icon,
+                                        color: _teal,
+                                        size: 21,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            metode.label,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          const Text(
+                                            'Ketuk untuk mengganti metode',
+                                            style: TextStyle(
+                                              color: Color(0xFF64748B),
+                                              fontSize: 11.5,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const Icon(
+                                      Icons.check_circle_rounded,
+                                      color: _teal,
+                                      size: 21,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Icon(
+                                      Icons.expand_more_rounded,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ],
                     if (_error != null) ...[
@@ -439,7 +576,11 @@ class _TopupTabState extends State<TopupTab> {
                               )
                             : const Icon(Icons.arrow_forward_rounded, size: 18),
                         label: Text(
-                          _submitting ? 'Memproses...' : 'Buat Top Up',
+                          _submitting
+                              ? 'Memproses...'
+                              : widget.untukTabungan
+                              ? 'Buat Setoran'
+                              : 'Buat Top Up',
                         ),
                       ),
                     ],

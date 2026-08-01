@@ -265,7 +265,7 @@ class _StepDots extends StatelessWidget {
   }
 }
 
-class _PasswordStep extends StatelessWidget {
+class _PasswordStep extends StatefulWidget {
   final TextEditingController controller;
   final String? error;
   final bool loading;
@@ -280,43 +280,75 @@ class _PasswordStep extends StatelessWidget {
   });
 
   @override
+  State<_PasswordStep> createState() => _PasswordStepState();
+}
+
+class _PasswordStepState extends State<_PasswordStep> {
+  bool _obscure = true;
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          'Kata Sandi Akun',
-          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          obscureText: true,
-          autofocus: true,
-          onSubmitted: (_) => onSubmit(),
-          decoration: InputDecoration(hintText: '••••••••', errorText: error),
-        ),
-        const SizedBox(height: 26),
-        SizedBox(
-          height: 54,
-          child: FilledButton(
-            onPressed: loading ? null : onSubmit,
-            child: loading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Text(
-                    'Lanjutkan',
-                    style: TextStyle(
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.w600,
+        Container(
+          padding: const EdgeInsets.fromLTRB(18, 20, 18, 22),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE2E8E4)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const _PinFieldLabel(
+                text: 'Kata Sandi Akun',
+                icon: Icons.lock_outline_rounded,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: widget.controller,
+                obscureText: _obscure,
+                autofocus: true,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => widget.onSubmit(),
+                decoration: InputDecoration(
+                  hintText: 'Kata sandi',
+                  errorText: widget.error,
+                  suffixIcon: IconButton(
+                    tooltip: _obscure
+                        ? 'Tampilkan kata sandi'
+                        : 'Sembunyikan kata sandi',
+                    onPressed: () => setState(() => _obscure = !_obscure),
+                    icon: Icon(
+                      _obscure
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                     ),
                   ),
+                ),
+              ),
+              const SizedBox(height: 22),
+              SizedBox(
+                height: 50,
+                child: FilledButton(
+                  onPressed: widget.loading ? null : widget.onSubmit,
+                  child: widget.loading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Verifikasi & Lanjutkan',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                ),
+              ),
+            ],
           ),
         ),
       ],

@@ -220,9 +220,7 @@ class _AnakDashboardState extends State<_AnakDashboard> {
           bottom: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
-            child: _HomeHeader(
-              userName: user?.name,
-            ),
+            child: _HomeHeader(userName: user?.name, photoUrl: user?.photoUrl),
           ),
         ),
         Expanded(
@@ -494,8 +492,9 @@ class _SectionHeader extends StatelessWidget {
 /// surface on the page.
 class _HomeHeader extends StatelessWidget {
   final String? userName;
+  final String? photoUrl;
 
-  const _HomeHeader({required this.userName});
+  const _HomeHeader({required this.userName, this.photoUrl});
 
   @override
   Widget build(BuildContext context) {
@@ -511,28 +510,52 @@ class _HomeHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                _sapaanWaktu(),
-                style: TextStyle(
-                  fontSize: 12.5,
-                  color: Colors.grey[500],
-                  fontWeight: FontWeight.w600,
-                ),
+              Row(
+                children: [
+                  Icon(
+                    DateTime.now().hour >= 18
+                        ? Icons.nightlight_round
+                        : Icons.wb_sunny_outlined,
+                    size: 13,
+                    color: const Color(0xFFD49A24),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _sapaanWaktu(),
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: Colors.grey[500],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      userName?.split(' ').first ?? 'Wali',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black87,
+                        letterSpacing: -0.3,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 7),
+                  const Icon(
+                    Icons.waving_hand_outlined,
+                    size: 20,
+                    color: Color(0xFFD49A24),
+                  ),
+                ],
               ),
               const SizedBox(height: 2),
               Text(
-                '${userName?.split(' ').first ?? 'Wali'} \u{1F44B}',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.black87,
-                  letterSpacing: -0.3,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'Kelola keuangan dengan mudah',
+                'Pantau keuangan santri dengan mudah',
                 style: TextStyle(fontSize: 12.5, color: Colors.grey[500]),
               ),
             ],
@@ -544,16 +567,51 @@ class _HomeHeader extends StatelessWidget {
         InkWell(
           borderRadius: BorderRadius.circular(10),
           onTap: () => context.read<TabIndexProvider>().go(3),
-          child: CircleAvatar(
-            radius: 19,
-            backgroundColor: _teal,
-            child: Text(
-              initial,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                padding: const EdgeInsets.all(2.5),
+                decoration: const BoxDecoration(
+                  color: _teal,
+                  shape: BoxShape.circle,
+                ),
+                child: CircleAvatar(
+                  backgroundColor: Colors.white,
+                  backgroundImage: photoUrl != null
+                      ? NetworkImage(photoUrl!)
+                      : null,
+                  child: photoUrl == null
+                      ? Text(
+                          initial,
+                          style: const TextStyle(
+                            color: _teal,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      : null,
+                ),
               ),
-            ),
+              const Positioned(
+                right: -1,
+                bottom: -1,
+                child: CircleAvatar(
+                  radius: 7,
+                  backgroundColor: Colors.white,
+                  child: CircleAvatar(
+                    radius: 5,
+                    backgroundColor: _teal,
+                    child: Icon(
+                      Icons.check_rounded,
+                      size: 7,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -598,9 +656,14 @@ class _NotifBellState extends State<_NotifBell> {
     return InkWell(
       borderRadius: BorderRadius.circular(10),
       onTap: _openNotifications,
-      child: SizedBox(
-        width: 40,
-        height: 40,
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE2E8E4)),
+        ),
         child: Stack(
           clipBehavior: Clip.none,
           alignment: Alignment.center,

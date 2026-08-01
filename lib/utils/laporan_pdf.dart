@@ -37,12 +37,14 @@ Future<void> cetakLaporanTransaksi({
   required List<Transaksi> items,
   required String periodeLabel,
   required String namaPondok,
+  int? saldoTabungan,
 }) async {
   final doc = await buildLaporanTransaksiDocument(
     anak: anak,
     items: items,
     periodeLabel: periodeLabel,
     namaPondok: namaPondok,
+    saldoTabungan: saldoTabungan,
   );
 
   await Printing.layoutPdf(onLayout: (format) async => doc.save());
@@ -56,27 +58,33 @@ Future<pw.Document> buildLaporanTransaksiDocument({
   required List<Transaksi> items,
   required String periodeLabel,
   required String namaPondok,
+  int? saldoTabungan,
 }) async {
   final doc = pw.Document();
   final now = DateTime.now();
 
-  final totalMasuk = items
-      .where((t) => t.isKredit)
+  final saldoMasuk = items
+      .where((t) => t.ledger == 'saldo' && t.isKredit)
       .fold<int>(0, (s, t) => s + t.nominal);
-  final totalKeluar = items
-      .where((t) => !t.isKredit)
+  final belanjaDanPenarikan = items
+      .where(
+        (t) =>
+            t.ledger == 'saldo' &&
+            !t.isKredit &&
+            t.jenis != 'transfer_ke_tabungan',
+      )
+      .fold<int>(0, (s, t) => s + t.nominal);
+  final tabunganDariSaldo = items
+      .where((t) => t.jenis == 'transfer_ke_tabungan')
+      .fold<int>(0, (s, t) => s + t.nominal);
+  final tabunganDariLuar = items
+      .where((t) => t.ledger == 'tabungan' && t.isKredit)
+      .fold<int>(0, (s, t) => s + t.nominal);
+  final pembayaranDiLuarSaldo = items
+      .where((t) => t.ledger == 'tagihan')
       .fold<int>(0, (s, t) => s + t.nominal);
 
   final sorted = [...items]..sort((a, b) => a.createdAt.compareTo(b.createdAt));
-
-  // The period's opening/closing balance is simply the running balance
-  // just before the first transaksi and just after the last one - every
-  // transaksi for this santri already carries its own saldo_sebelum/
-  // sesudah, so there's no separate lookup needed. Falls back to the
-  // santri's current saldo when the period has no transaksi at all (i.e.
-  // nothing changed, so awal == akhir == saldo now).
-  final saldoAwal = sorted.isEmpty ? anak.saldo : sorted.first.saldoSebelum;
-  final saldoAkhir = sorted.isEmpty ? anak.saldo : sorted.last.saldoSesudah;
 
   doc.addPage(
     pw.MultiPage(
@@ -88,7 +96,10 @@ Future<pw.Document> buildLaporanTransaksiDocument({
               children: [
                 pw.Text(
                   namaPondok.toUpperCase(),
-                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+                  style: pw.TextStyle(
+                    fontWeight: pw.FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
                 pw.Text(
                   'Laporan Transaksi Santri',
@@ -109,11 +120,17 @@ Future<pw.Document> buildLaporanTransaksiDocument({
             children: [
               pw.Text(
                 'Dicetak otomatis ${formatTanggalWaktu(now)}',
-                style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey700),
+                style: const pw.TextStyle(
+                  fontSize: 7.5,
+                  color: PdfColors.grey700,
+                ),
               ),
               pw.Text(
                 'Halaman ${context.pageNumber} / ${context.pagesCount}',
-                style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey700),
+                style: const pw.TextStyle(
+                  fontSize: 7.5,
+                  color: PdfColors.grey700,
+                ),
               ),
             ],
           ),
@@ -146,7 +163,7 @@ Future<pw.Document> buildLaporanTransaksiDocument({
         ),
         pw.SizedBox(height: 18),
         pw.Text(
-          'Ringkasan',
+          'Posisi Saldo Saat Ini',
           style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11),
         ),
         pw.SizedBox(height: 8),
@@ -155,28 +172,70 @@ Future<pw.Document> buildLaporanTransaksiDocument({
           columnWidths: const {
             0: pw.FlexColumnWidth(),
             1: pw.FlexColumnWidth(),
-            2: pw.FlexColumnWidth(),
-            3: pw.FlexColumnWidth(),
           },
           children: [
             pw.TableRow(
               decoration: const pw.BoxDecoration(color: PdfColors.grey100),
               children: [
-                _ringkasanHeader('Saldo Awal (IDR)'),
-                _ringkasanHeader('Transaksi Keluar (IDR)'),
-                _ringkasanHeader('Transaksi Masuk (IDR)'),
-                _ringkasanHeader('Saldo Akhir (IDR)'),
+                _ringkasanHeader('Saldo Belanja (IDR)'),
+                _ringkasanHeader('Saldo Tabungan (IDR)'),
               ],
             ),
             pw.TableRow(
               children: [
-                _ringkasanValue(formatRupiah(saldoAwal)),
-                _ringkasanValue(formatRupiah(totalKeluar), color: PdfColors.red800),
-                _ringkasanValue(formatRupiah(totalMasuk), color: PdfColors.green800),
-                _ringkasanValue(formatRupiah(saldoAkhir), bold: true),
+                _ringkasanValue(formatRupiah(anak.saldo), bold: true),
+                _ringkasanValue(
+                  saldoTabungan == null
+                      ? 'Tidak tersedia'
+                      : formatRupiah(saldoTabungan),
+                  bold: true,
+                  color: PdfColors.deepPurple700,
+                ),
               ],
             ),
           ],
+        ),
+        pw.SizedBox(height: 14),
+        pw.Text(
+          'Mutasi Periode',
+          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11),
+        ),
+        pw.SizedBox(height: 8),
+        pw.Table(
+          border: pw.TableBorder.all(color: _border, width: 0.6),
+          columnWidths: const {
+            0: pw.FlexColumnWidth(2),
+            1: pw.FlexColumnWidth(),
+          },
+          children: [
+            _mutasiRow('Saldo masuk', saldoMasuk, PdfColors.green800),
+            _mutasiRow(
+              'Belanja dan penarikan',
+              belanjaDanPenarikan,
+              PdfColors.red800,
+            ),
+            _mutasiRow(
+              'Dipindah ke tabungan',
+              tabunganDariSaldo,
+              PdfColors.deepPurple700,
+            ),
+            _mutasiRow(
+              'Setoran tabungan dari luar',
+              tabunganDariLuar,
+              PdfColors.deepPurple700,
+            ),
+            if (pembayaranDiLuarSaldo > 0)
+              _mutasiRow(
+                'Tagihan dibayar di luar saldo',
+                pembayaranDiLuarSaldo,
+                PdfColors.grey800,
+              ),
+          ],
+        ),
+        pw.SizedBox(height: 5),
+        pw.Text(
+          'Catatan: perpindahan ke tabungan bukan pengeluaran. Saldo tabungan tidak dapat digunakan untuk membayar tagihan.',
+          style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey700),
         ),
         pw.SizedBox(height: 18),
         pw.Text(
@@ -204,10 +263,10 @@ Future<pw.Document> buildLaporanTransaksiDocument({
             ),
             columnWidths: const {
               0: pw.FixedColumnWidth(80),
-              1: pw.FlexColumnWidth(3),
+              1: pw.FlexColumnWidth(2.5),
               2: pw.FixedColumnWidth(62),
               3: pw.FixedColumnWidth(62),
-              4: pw.FixedColumnWidth(68),
+              4: pw.FixedColumnWidth(48),
             },
             children: [
               pw.TableRow(
@@ -217,7 +276,7 @@ Future<pw.Document> buildLaporanTransaksiDocument({
                   _rincianHeader('Transaksi'),
                   _rincianHeader('Keluar (IDR)', alignRight: true),
                   _rincianHeader('Masuk (IDR)', alignRight: true),
-                  _rincianHeader('Saldo Akhir (IDR)', alignRight: true),
+                  _rincianHeader('Ledger'),
                 ],
               ),
               ...sorted.map(
@@ -233,9 +292,11 @@ Future<pw.Document> buildLaporanTransaksiDocument({
                     _rincianCell(
                       t.isKredit ? formatRupiah(t.nominal) : '-',
                       alignRight: true,
-                      color: t.isKredit ? PdfColors.green800 : PdfColors.grey400,
+                      color: t.isKredit
+                          ? PdfColors.green800
+                          : PdfColors.grey400,
                     ),
-                    _rincianCell(formatRupiah(t.saldoSesudah), alignRight: true, bold: true),
+                    _rincianCell(_ledgerLabel(t.ledger), bold: true),
                   ],
                 ),
               ),
@@ -246,6 +307,26 @@ Future<pw.Document> buildLaporanTransaksiDocument({
   );
 
   return doc;
+}
+
+String _ledgerLabel(String ledger) {
+  switch (ledger) {
+    case 'tabungan':
+      return 'Tabungan';
+    case 'tagihan':
+      return 'Di luar saldo';
+    default:
+      return 'Saldo';
+  }
+}
+
+pw.TableRow _mutasiRow(String label, int value, PdfColor color) {
+  return pw.TableRow(
+    children: [
+      _ringkasanHeader(label),
+      _ringkasanValue(formatRupiah(value), bold: true, color: color),
+    ],
+  );
 }
 
 /// The subtitle under a transaksi's jenis label - whatever gives the most
@@ -287,7 +368,10 @@ pw.Widget _transaksiCell(Transaksi t) {
         ),
         if (subtitle != null) ...[
           pw.SizedBox(height: 1.5),
-          pw.Text(subtitle, style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey600)),
+          pw.Text(
+            subtitle,
+            style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey600),
+          ),
         ],
       ],
     ),
@@ -356,9 +440,15 @@ pw.Widget _infoRow(String label, String value) {
       children: [
         pw.SizedBox(
           width: 90,
-          child: pw.Text(label, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
+          child: pw.Text(
+            label,
+            style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+          ),
         ),
-        pw.Text(value, style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold)),
+        pw.Text(
+          value,
+          style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+        ),
       ],
     ),
   );

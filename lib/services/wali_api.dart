@@ -6,6 +6,7 @@ import '../models/banner_item.dart';
 import '../models/notification_item.dart';
 import '../models/biaya_midtrans.dart';
 import '../models/tagihan.dart';
+import '../models/tabungan.dart';
 import '../models/topup.dart';
 import '../models/transaksi.dart';
 import '../models/transfer_saldo_result.dart';
@@ -79,6 +80,39 @@ class WaliApi {
   Future<int> getSaldo(int santriId) async {
     final data = await _api.get('/wali/anak/$santriId/saldo');
     return (data['saldo'] as num?)?.toInt() ?? 0;
+  }
+
+  Future<RingkasanTabungan> getTabungan(int santriId) async {
+    final data = await _api.get('/wali/anak/$santriId/tabungan');
+    return RingkasanTabungan.fromJson(Map<String, dynamic>.from(data as Map));
+  }
+
+  Future<HasilPindahTabungan> pindahSaldoKeTabungan(
+    int santriId,
+    int nominal, {
+    required String pin,
+    String? requestId,
+  }) async {
+    final data = await _api.post('/wali/anak/$santriId/tabungan/dari-saldo', {
+      'nominal': nominal,
+      'pin': pin,
+      if (requestId != null) 'request_id': requestId,
+    });
+    return HasilPindahTabungan.fromJson(
+      Map<String, dynamic>.from(data as Map),
+    );
+  }
+
+  Future<Topup> mulaiSetoranTabunganMidtrans(
+    int santriId,
+    int nominal,
+    String metode,
+  ) async {
+    final data = await _api.post('/wali/anak/$santriId/tabungan/midtrans', {
+      'nominal': nominal,
+      'metode': metode,
+    });
+    return Topup.fromJson(data as Map<String, dynamic>);
   }
 
   Future<List<Transaksi>> getTransaksi(int santriId) async {

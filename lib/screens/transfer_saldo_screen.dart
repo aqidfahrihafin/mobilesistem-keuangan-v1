@@ -10,6 +10,7 @@ import '../utils/payment_flow_guard.dart';
 import '../widgets/confirm_dialog.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/error_state_view.dart';
+import '../widgets/loading_state_view.dart';
 import '../widgets/glass_modal_surface.dart';
 import '../widgets/pin_entry_sheet.dart';
 import '../widgets/saldo_minimum_notice.dart';
@@ -74,24 +75,129 @@ class TransferSaldoScreen extends StatelessWidget {
             icon: const Icon(Icons.help_outline_rounded),
             onPressed: () => showDialog<void>(
               context: context,
-              builder: (dialogContext) => AlertDialog(
-                title: const Text('Transfer keluarga'),
-                content: const Text(
-                  'Transfer hanya dapat dilakukan ke santri dalam satu Kartu Keluarga. Saldo pengirim juga harus tetap berada di atas batas minimum.',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(dialogContext),
-                    child: const Text('Mengerti'),
-                  ),
-                ],
-              ),
+              builder: (dialogContext) => const _TransferInfoDialog(),
             ),
           ),
           const SizedBox(width: 4),
         ],
       ),
       body: SafeArea(child: body),
+    );
+  }
+}
+
+class _TransferInfoDialog extends StatelessWidget {
+  const _TransferInfoDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE8F5F3),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.family_restroom_rounded,
+                      color: _teal,
+                      size: 23,
+                    ),
+                  ),
+                  const SizedBox(width: 13),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Transfer keluarga',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        SizedBox(height: 3),
+                        Text(
+                          'Ketentuan sebelum mengirim saldo',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              const _TransferInfoRow(
+                icon: Icons.people_alt_outlined,
+                text: 'Penerima harus terdaftar dalam satu Kartu Keluarga.',
+              ),
+              const SizedBox(height: 12),
+              const _TransferInfoRow(
+                icon: Icons.account_balance_wallet_outlined,
+                text: 'Saldo pengirim wajib tetap menyisakan batas minimum.',
+              ),
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Saya Mengerti'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TransferInfoRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _TransferInfoRow({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: _teal.withValues(alpha: 0.07),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 16, color: _teal),
+        ),
+        const SizedBox(width: 11),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.45,
+                color: Color(0xFF475569),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -346,10 +452,8 @@ class _TransferFormState extends State<_TransferForm> {
         try {
           final transaksi = await runWithTransactionProgress(
             context,
-            message:
-                'Koneksi terputus. Sedang memastikan hasil transfer...',
-            action: () =>
-                context.read<WaliApi>().getTransaksi(widget.dari.id),
+            message: 'Koneksi terputus. Sedang memastikan hasil transfer...',
+            action: () => context.read<WaliApi>().getTransaksi(widget.dari.id),
           );
           final tercatat = transaksi.any(
             (item) =>
@@ -418,7 +522,11 @@ class _TransferFormState extends State<_TransferForm> {
   @override
   Widget build(BuildContext context) {
     if (_loadingMinimal) {
-      return const Center(child: CircularProgressIndicator());
+      return const LoadingStateView(
+        title: 'Menyiapkan transfer',
+        message: 'Batas saldo dan tujuan transfer sedang diperiksa.',
+        icon: Icons.swap_horiz_rounded,
+      );
     }
 
     final minimal = _minimalSaldo;
@@ -436,7 +544,11 @@ class _TransferFormState extends State<_TransferForm> {
       future: _saudaraFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const LoadingStateView(
+            title: 'Mencari tujuan transfer',
+            message: 'Daftar santri yang dapat menerima sedang disiapkan.',
+            icon: Icons.people_alt_outlined,
+          );
         }
 
         if (snapshot.hasError) {
@@ -496,10 +608,7 @@ class _TransferFormState extends State<_TransferForm> {
                           ),
                           const SizedBox(width: 12),
                           const Expanded(
-                            child: Divider(
-                              height: 1,
-                              color: Color(0xFFEDF2F1),
-                            ),
+                            child: Divider(height: 1, color: Color(0xFFEDF2F1)),
                           ),
                           Container(
                             width: 30,
@@ -542,113 +651,142 @@ class _TransferFormState extends State<_TransferForm> {
                   aksi: 'transfer',
                 ),
               ],
-              const SizedBox(height: 22),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8, left: 2),
-                child: Text(
-                  'Nominal Transfer',
-                  style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
-                ),
-              ),
-              TextField(
-                controller: _nominalController,
-                focusNode: _nominalFocus,
-                enabled: !diBawahMinimum,
-                keyboardType: TextInputType.number,
-                onChanged: (_) => setState(() => _nominalError = null),
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                ),
-                decoration: InputDecoration(
-                  prefixText:
-                      (_nominalFocus.hasFocus ||
-                          _nominalController.text.isNotEmpty)
-                      ? 'Rp '
-                      : null,
-                  hintText: '0',
-                  errorText: _nominalError,
-                  errorMaxLines: 2,
-                  suffixIcon: diBawahMinimum
-                      ? Icon(
-                          Icons.lock_outline_rounded,
-                          size: 18,
-                          color: Colors.grey[400],
-                        )
-                      : null,
-                ),
-              ),
-              if (minimal != null && !diBawahMinimum)
+              if (_ke != null) ...[
+                const SizedBox(height: 12),
                 Container(
-                  margin: const EdgeInsets.only(top: 9),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 11,
-                    vertical: 9,
-                  ),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: const Color(0xFFE2E8E4)),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 1),
-                        child: Icon(
-                          Icons.info_outline_rounded,
-                          size: 15,
-                          color: _teal,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Maksimal transfer ${formatRupiah((widget.dari.saldo - minimal).clamp(0, widget.dari.saldo))}. '
-                          'Saldo minimum ${formatRupiah(minimal)} tetap disisakan.',
-                          style: const TextStyle(
-                            fontSize: 11.5,
-                            color: Color(0xFF64748B),
-                            height: 1.35,
-                          ),
-                        ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x080F172A),
+                        blurRadius: 12,
+                        offset: Offset(0, 4),
                       ),
                     ],
                   ),
-                ),
-              const SizedBox(height: 28),
-              FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                onPressed: (_submitting || _ke == null || diBawahMinimum)
-                    ? null
-                    : _kirim,
-                icon: _submitting
-                    ? const SizedBox.shrink()
-                    : Icon(
-                        diBawahMinimum
-                            ? Icons.lock_outline_rounded
-                            : Icons.send_rounded,
-                        size: 18,
-                      ),
-                label: _submitting
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'Nominal Transfer',
+                        style: TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
                         ),
-                      )
-                    : Text(
-                        diBawahMinimum ? 'Saldo Belum Cukup' : 'Kirim Transfer',
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _nominalController,
+                        focusNode: _nominalFocus,
+                        enabled: !diBawahMinimum,
+                        keyboardType: TextInputType.number,
+                        onChanged: (_) => setState(() => _nominalError = null),
                         style: const TextStyle(
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.w600,
+                          color: _teal,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                        ),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: const Color(0xFFF8FAF9),
+                          prefixText: 'Rp ',
+                          prefixStyle: const TextStyle(
+                            color: _teal,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          hintText: '0',
+                          errorText: _nominalError,
+                          errorMaxLines: 2,
+                          suffixIcon: diBawahMinimum
+                              ? Icon(
+                                  Icons.lock_outline_rounded,
+                                  size: 18,
+                                  color: Colors.grey[400],
+                                )
+                              : null,
                         ),
                       ),
-              ),
+                      if (minimal != null && !diBawahMinimum) ...[
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0F9F7),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(top: 1),
+                                child: Icon(
+                                  Icons.info_outline_rounded,
+                                  size: 17,
+                                  color: _teal,
+                                ),
+                              ),
+                              const SizedBox(width: 9),
+                              Expanded(
+                                child: Text(
+                                  'Maksimal transfer ${formatRupiah((widget.dari.saldo - minimal).clamp(0, widget.dari.saldo))}. '
+                                  'Saldo minimum ${formatRupiah(minimal)} tetap disisakan.',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF64748B),
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 28),
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  onPressed: (_submitting || _ke == null || diBawahMinimum)
+                      ? null
+                      : _kirim,
+                  icon: _submitting
+                      ? const SizedBox.shrink()
+                      : Icon(
+                          diBawahMinimum
+                              ? Icons.lock_outline_rounded
+                              : Icons.send_rounded,
+                          size: 18,
+                        ),
+                  label: _submitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          diBawahMinimum
+                              ? 'Saldo Belum Cukup'
+                              : 'Kirim Transfer',
+                          style: const TextStyle(
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                ),
+              ],
             ],
           ),
         );
@@ -673,74 +811,73 @@ class _TransferParty extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: _teal,
-            child: Text(
-              anak.nama.isNotEmpty ? anak.nama[0].toUpperCase() : '?',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+      children: [
+        CircleAvatar(
+          backgroundColor: _teal,
+          child: Text(
+            anak.nama.isNotEmpty ? anak.nama[0].toUpperCase() : '?',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.7,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                anak.nama,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+              Text(
+                '${anak.nis} • ${anak.lembaga ?? 'Pondok Pusat'}',
+                style: TextStyle(color: Colors.grey[500], fontSize: 11.5),
+              ),
+            ],
+          ),
+        ),
+        if (saldo != null)
+          Padding(
+            padding: const EdgeInsets.only(left: 8),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  label,
-                  style: const TextStyle(
+                const Text(
+                  'SALDO',
+                  style: TextStyle(
                     color: Color(0xFF94A3B8),
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.7,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 2),
                 Text(
-                  anak.nama,
+                  formatRupiah(saldo!),
                   style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
+                    color: _teal,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
                   ),
-                ),
-                Text(
-                  '${anak.nis} • ${anak.lembaga ?? 'Pondok Pusat'}',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 11.5),
                 ),
               ],
             ),
           ),
-          if (saldo != null)
-            Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  const Text(
-                    'SALDO',
-                    style: TextStyle(
-                      color: Color(0xFF94A3B8),
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Text(
-                    formatRupiah(saldo!),
-                    style: const TextStyle(
-                      color: _teal,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          if (trailing != null)
-            Icon(trailing, color: Colors.grey[400], size: 20),
-        ],
+        if (trailing != null) Icon(trailing, color: Colors.grey[400], size: 20),
+      ],
     );
   }
 }
@@ -782,9 +919,7 @@ class _RecipientPlaceholder extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                disabled
-                    ? 'Transfer belum tersedia'
-                    : 'Pilih santri penerima',
+                disabled ? 'Transfer belum tersedia' : 'Pilih santri penerima',
                 style: TextStyle(
                   color: disabled ? Colors.grey[500] : const Color(0xFF334155),
                   fontSize: 13.5,

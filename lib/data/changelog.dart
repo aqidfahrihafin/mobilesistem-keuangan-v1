@@ -15,6 +15,16 @@ class ChangelogEntry {
 /// backend changelog endpoint, this list is the source of truth.
 const changelog = <ChangelogEntry>[
   ChangelogEntry(
+    version: '1.1.13',
+    date: 'Agustus 2026',
+    changes: [
+      'Login sidik jari kini terbuka otomatis pada halaman PIN saat fitur biometrik aktif.',
+      'Tampilan nominal Top Up, Setor Tabungan, dan Transfer Saldo dibuat lebih terstruktur.',
+      'Pusat notifikasi tetap menampilkan isi pesan ketika data asal sudah tidak tersedia.',
+      'Tampilan data kosong, Semua Layanan, Tentang Aplikasi, Versi, dan Pusat Bantuan diperbarui.',
+    ],
+  ),
+  ChangelogEntry(
     version: '1.1.1',
     date: 'Juli 2026',
     changes: [

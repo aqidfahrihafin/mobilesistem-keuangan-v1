@@ -48,6 +48,18 @@ class _AuthGateState extends State<AuthGate> {
           return const OnboardingScreen();
         }
 
+        // A retained quick-login session should land directly on the PIN
+        // gate after a process restart/soft logout, not make the wali find a
+        // small "PIN" button below the password form. The PIN screen also
+        // exposes fingerprint when both methods are enabled.
+        if (!auth.isLoggedIn && auth.canUsePinLogin) {
+          return const PinLoginScreen();
+        }
+
+        if (!auth.isLoggedIn && auth.canUseBiometricLogin) {
+          return const PinLoginScreen();
+        }
+
         if (!auth.isLoggedIn) {
           return const LoginScreen();
         }
@@ -60,7 +72,7 @@ class _AuthGateState extends State<AuthGate> {
         }
 
         if (auth.needsBiometricUnlock) {
-          return const LoginScreen();
+          return const PinLoginScreen();
         }
 
         if (auth.mustChangePassword) {

@@ -25,9 +25,19 @@ class VersionScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFE9EBEF)),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0F766E), Color(0xFF115E59)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x22115E59),
+                      blurRadius: 18,
+                      offset: Offset(0, 7),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
@@ -35,13 +45,13 @@ class VersionScreen extends StatelessWidget {
                       width: 46,
                       height: 46,
                       decoration: BoxDecoration(
-                        color: _teal.withValues(alpha: 0.1),
+                        color: Colors.white.withValues(alpha: 0.14),
                         shape: BoxShape.circle,
                       ),
                       alignment: Alignment.center,
                       child: const Icon(
                         Icons.new_releases_rounded,
-                        color: _teal,
+                        color: Colors.white,
                         size: 22,
                       ),
                     ),
@@ -53,7 +63,7 @@ class VersionScreen extends StatelessWidget {
                           Text(
                             'Versi Terpasang',
                             style: TextStyle(
-                              color: Colors.grey[600],
+                              color: Colors.white70,
                               fontSize: 12,
                             ),
                           ),
@@ -63,6 +73,7 @@ class VersionScreen extends StatelessWidget {
                                 ? '${info.version} (build ${info.buildNumber})'
                                 : 'Memuat...',
                             style: const TextStyle(
+                              color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 15.5,
                             ),

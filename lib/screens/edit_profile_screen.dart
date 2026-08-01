@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../services/api_client.dart';
 import '../services/auth_service.dart';
+import '../theme/app_theme.dart';
+import '../widgets/flat_card.dart';
 
 /// Wali-editable profile fields, mirroring Profil::simpanProfil() on the
 /// web side: name, email, phone. nis/no_kk are intentionally absent - both
@@ -22,6 +25,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _phoneController;
 
   bool _loading = false;
+  bool _uploadingPhoto = false;
   String? _nameError;
   String? _emailError;
   String? _phoneError;
@@ -85,10 +89,43 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  Future<void> _pickPhoto() async {
+    final photo = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 768,
+      maxHeight: 768,
+      imageQuality: 80,
+    );
+    if (photo == null || !mounted) return;
+
+    setState(() => _uploadingPhoto = true);
+    try {
+      await context.read<AuthService>().updateProfilePhoto(photo.path);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Foto profil berhasil diperbarui.')),
+        );
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _uploadingPhoto = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<AuthService>().user;
+    final initial = (user?.name.isNotEmpty ?? false)
+        ? user!.name[0].toUpperCase()
+        : '?';
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F8F7),
+      backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Edit Profil')),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -98,6 +135,86 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                FlatCard(
+                  child: Row(
+                    children: [
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          CircleAvatar(
+                            radius: 31,
+                            backgroundColor: const Color(0xFFE6F5F1),
+                            backgroundImage: user?.photoUrl != null
+                                ? NetworkImage(user!.photoUrl!)
+                                : null,
+                            child: user?.photoUrl == null
+                                ? Text(
+                                    initial,
+                                    style: const TextStyle(
+                                      color: AppColors.primary,
+                                      fontSize: 21,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                          Positioned(
+                            right: -5,
+                            bottom: -5,
+                            child: Material(
+                              color: AppColors.primary,
+                              shape: const CircleBorder(
+                                side: BorderSide(
+                                  color: AppColors.surface,
+                                  width: 2,
+                                ),
+                              ),
+                              child: InkWell(
+                                customBorder: const CircleBorder(),
+                                onTap: _uploadingPhoto ? null : _pickPhoto,
+                                child: SizedBox(
+                                  width: 29,
+                                  height: 29,
+                                  child: _uploadingPhoto
+                                      ? const Padding(
+                                          padding: EdgeInsets.all(7),
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Icon(
+                                          Icons.camera_alt_outlined,
+                                          size: 15,
+                                          color: Colors.white,
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Informasi akun',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Pastikan data kontak aktif agar informasi penting dapat diterima.',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
                 if (_generalError != null) ...[
                   Container(
                     width: double.infinity,
@@ -116,74 +233,67 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   const SizedBox(height: 16),
                 ],
-                const Text(
-                  'Nama Lengkap',
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _nameController,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: InputDecoration(errorText: _nameError),
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Wajib diisi' : null,
-                ),
-                const SizedBox(height: 18),
-                const Text(
-                  'Email',
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    hintText: 'nama@email.com',
-                    errorText: _emailError,
+                FlatCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextFormField(
+                        controller: _nameController,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: InputDecoration(
+                          labelText: 'Nama lengkap',
+                          prefixIcon: const Icon(Icons.person_outline_rounded),
+                          errorText: _nameError,
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Wajib diisi'
+                            : null,
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          labelText: 'Email',
+                          hintText: 'nama@email.com',
+                          prefixIcon: const Icon(Icons.mail_outline_rounded),
+                          errorText: _emailError,
+                        ),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return null;
+                          if (!v.contains('@')) return 'Email tidak valid';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        decoration: InputDecoration(
+                          labelText: 'Nomor telepon',
+                          hintText: '081234567890',
+                          prefixIcon: const Icon(Icons.phone_outlined),
+                          errorText: _phoneError,
+                        ),
+                        onFieldSubmitted: (_) => _submit(),
+                      ),
+                    ],
                   ),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return null;
-                    if (!v.contains('@')) return 'Email tidak valid';
-                    return null;
-                  },
                 ),
-                const SizedBox(height: 18),
-                const Text(
-                  'Nomor Telepon',
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    hintText: '081234567890',
-                    errorText: _phoneError,
-                  ),
-                  onFieldSubmitted: (_) => _submit(),
-                ),
-                const SizedBox(height: 26),
-                SizedBox(
-                  height: 52,
-                  child: FilledButton(
-                    onPressed: _loading ? null : _submit,
-                    child: _loading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Simpan Perubahan',
-                            style: TextStyle(
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w600,
-                            ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: _loading ? null : _submit,
+                  icon: _loading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
                           ),
-                  ),
+                        )
+                      : const Icon(Icons.save_outlined, size: 18),
+                  label: Text(_loading ? 'Menyimpan...' : 'Simpan Perubahan'),
                 ),
               ],
             ),

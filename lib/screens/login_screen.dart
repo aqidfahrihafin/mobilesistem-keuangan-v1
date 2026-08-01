@@ -31,6 +31,16 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _checkServerStatus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final auth = context.read<AuthService>();
+      // When fingerprint is the only enabled quick-login method, prompt it
+      // immediately on app start/resume. If PIN is also enabled AuthGate
+      // routes to PinLoginScreen instead, where both choices remain visible.
+      if (auth.canUseBiometricLogin && !auth.canUsePinLogin) {
+        _submitWithBiometrics();
+      }
+    });
   }
 
   @override

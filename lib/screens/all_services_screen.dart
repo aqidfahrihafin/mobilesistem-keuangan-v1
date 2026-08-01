@@ -9,6 +9,7 @@ import 'pin_setup_screen.dart';
 import 'santri_profile_screen.dart';
 import 'scan_bayar_screen.dart';
 import 'topup_tab.dart';
+import 'tabungan_screen.dart';
 import 'transfer_saldo_screen.dart';
 
 const _bg = AppColors.background;
@@ -62,15 +63,14 @@ class AllServicesScreen extends StatelessWidget {
                   label: 'Tagihan',
                   onTap: () => _goTab(context, 1),
                 ),
-                const _ServiceItem(
+                _ServiceItem(
                   icon: Icons.savings_outlined,
                   label: 'Tabungan',
-                  enabled: false,
-                  comingSoon: true,
+                  onTap: () => _open(context, const TabunganScreen()),
                 ),
               ],
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 12),
             _ServiceSection(
               title: 'Santri & Akun',
               items: [
@@ -96,7 +96,7 @@ class AllServicesScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 12),
             _ServiceSection(
               title: 'Keamanan & Bantuan',
               items: [
@@ -238,22 +238,19 @@ class _ServiceItem extends StatelessWidget {
                   width: double.infinity,
                   height: 58,
                   decoration: BoxDecoration(
-                    color: enabled
-                        ? color.withValues(alpha: 0.09)
-                        : AppColors.surfaceMuted,
+                    color: AppColors.surfaceMuted,
                     borderRadius: AppRadius.borderRadius,
-                    border: Border.all(
-                      color: enabled
-                          ? color.withValues(alpha: 0.13)
-                          : AppColors.border,
-                    ),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x0A0F172A),
+                        blurRadius: 5,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
                   ),
                   alignment: Alignment.center,
-                  child: Icon(
-                    icon,
-                    color: color,
-                    size: 24,
-                  ),
+                  child: Icon(icon, color: color, size: 28),
                 ),
                 if (comingSoon)
                   Positioned(

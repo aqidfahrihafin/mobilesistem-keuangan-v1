@@ -61,6 +61,14 @@ web (login & kata sandi awalnya sama-sama No. KK keluarga tsb).
   pengguna pernah berhasil masuk memakai username dan kata sandi. PIN login
   hanya membuka sesi tersimpan pada perangkat, bukan autentikasi baru ke server,
   dan berbeda dari PIN transaksi.
+- Menutup paksa aplikasi atau menghapusnya dari daftar Recent Apps tetap
+  kembali ke PIN/sidik jari selama quick login aktif. Jumlah salah PIN juga
+  disimpan lintas restart; percobaan kelima mencabut sesi dan mewajibkan
+  password.
+- Memilih **Gunakan Password** atau mematikan metode quick login terakhir
+  mencabut token tersimpan, sehingga restart aplikasi tidak dapat melewati
+  form password. Menghapus data aplikasi dari Settings atau uninstall tetap
+  menghapus secure storage milik sistem operasi dan selalu memerlukan password.
 - Alur wajib ganti kata sandi untuk akun yang dibuat otomatis dengan No. KK
   sebagai kata sandi awal (mengikuti `must_change_password` dari API), plus
   ganti kata sandi sukarela dari tab Profil.
@@ -157,3 +165,31 @@ lib/
 State management: `provider` (`ChangeNotifierProvider`) — dipilih karena
 kecil dan cukup untuk ukuran app saat ini, bukan karena batasan teknis. Boleh
 diganti ke Riverpod/Bloc nanti kalau app-nya berkembang lebih kompleks.
+
+## Dokumentasi developer
+
+- [Alur autentikasi wali](docs/ALUR-AUTENTIKASI-WALI.md): menu flow lengkap
+  untuk password, PIN, sidik jari, pemulihan sesi, salah PIN lima kali,
+  logout, pergantian akun, token kedaluwarsa, keamanan, dan pengujian.
+- Dokumentasi endpoint backend: `../docs/API-WALI.md`.
+- Panduan operasional dan keamanan: `../docs/OPERATIONS-SECURITY.md`.
+
+### Catatan UI versi 1.1.12
+
+- Form nominal transfer baru tampil setelah santri tujuan dipilih.
+- Ringkasan Tabungan menampilkan identitas, saldo belanja, dan tabungan dalam
+  satu kartu; tombol pemindahan dan VA/QRIS memiliki jarak yang konsisten.
+- Kelompok Semua Layanan dibuat lebih rapat.
+- Daftar Riwayat, Pengeluaran, dan Tagihan memakai permukaan putih full-width
+  tanpa radius maupun border samping.
+- Metode pembayaran aktif memiliki indikator centang.
+
+### Catatan laporan versi 1.1.13
+
+- Ringkasan dan statement PDF memisahkan saldo belanja dengan saldo tabungan.
+- Perpindahan saldo ke tabungan dicatat sebagai perpindahan internal, bukan
+  pengeluaran konsumtif.
+- Mutasi periode dibagi menjadi saldo masuk, belanja/penarikan, tabungan dari
+  saldo, setoran tabungan dari luar, dan pembayaran tagihan di luar saldo.
+- Rincian PDF menampilkan ledger setiap transaksi agar sumber mutasi mudah
+  diaudit.

@@ -54,7 +54,12 @@ class TransaksiReferensi {
   final String? nis;
   final String? kode;
 
-  TransaksiReferensi({required this.type, required this.nama, this.nis, this.kode});
+  TransaksiReferensi({
+    required this.type,
+    required this.nama,
+    this.nis,
+    this.kode,
+  });
 
   bool get isSantri => type == 'santri';
   bool get isUnitUsaha => type == 'unit_usaha';
@@ -109,6 +114,7 @@ class Transaksi {
   final int saldoSesudah;
   final String status;
   final String metode;
+  final String ledger;
 
   /// The specific Midtrans channel (bni_va/bca_va/bri_va/qris - same kode
   /// as MetodeTopup.kode) when known, e.g. for a topup transaksi - null for
@@ -146,6 +152,7 @@ class Transaksi {
     required this.saldoSesudah,
     required this.status,
     required this.metode,
+    this.ledger = 'saldo',
     this.metodeDetail,
     this.biayaMidtrans,
     this.biayaDitanggungWali,
@@ -181,7 +188,9 @@ class Transaksi {
       if (value == 1 || value.toString() == '1' || value.toString() == 'true') {
         return true;
       }
-      if (value == 0 || value.toString() == '0' || value.toString() == 'false') {
+      if (value == 0 ||
+          value.toString() == '0' ||
+          value.toString() == 'false') {
         return false;
       }
       return null;
@@ -197,6 +206,7 @@ class Transaksi {
       saldoSesudah: readInt(json['saldo_sesudah']),
       status: json['status']?.toString() ?? 'berhasil',
       metode: json['metode']?.toString() ?? 'sistem',
+      ledger: json['ledger']?.toString() ?? 'saldo',
       metodeDetail: json['metode_detail']?.toString(),
       biayaMidtrans: readNullableInt(json['biaya_midtrans']),
       biayaDitanggungWali: readNullableBool(json['biaya_ditanggung_wali']),
@@ -210,9 +220,7 @@ class Transaksi {
       referensi: referensiJson != null
           ? TransaksiReferensi.fromJson(referensiJson)
           : null,
-      santri: santriJson != null
-          ? TransaksiSantri.fromJson(santriJson)
-          : null,
+      santri: santriJson != null ? TransaksiSantri.fromJson(santriJson) : null,
       kwitansiId: readNullableInt(json['kwitansi_id']),
     );
   }
@@ -226,4 +234,10 @@ const Map<String, String> jenisTransaksiLabel = {
   'penyesuaian': 'Penyesuaian',
   'pembayaran_kantin': 'Pembayaran Kantin',
   'transfer_antar_santri': 'Transfer Antar Santri',
+  'transfer_ke_tabungan': 'Dipindahkan ke Tabungan',
+  'setoran_tunai': 'Setoran Tabungan Tunai',
+  'setoran_dari_saldo': 'Setoran dari Saldo',
+  'setoran_midtrans': 'Setoran Tabungan',
+  'koreksi_masuk': 'Koreksi Tabungan Masuk',
+  'koreksi_keluar': 'Koreksi Tabungan Keluar',
 };

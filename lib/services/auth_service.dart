@@ -1,7 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -24,15 +24,20 @@ class AuthService extends ChangeNotifier {
 
   static const _biometricEnabledKey = 'biometric_enabled';
   static const _loginPinKey = 'login_pin';
+  static const _loginPinFailedAttemptsKey = 'login_pin_failed_attempts';
   static const _quickLoginUserIdKey = 'quick_login_user_id';
+  static const _cachedUserKey = 'quick_login_cached_user';
+  static const _quickTokenKey = 'quick_login_refresh_token';
   static const _onboardedKey = 'has_onboarded';
 
   WaliUser? _user;
   String? _token;
+  String? _quickToken;
   bool _restoring = true;
   bool _biometricEnabled = false;
   String? _loginPin;
   int? _quickLoginUserId;
+  int _loginPinFailedAttempts = 0;
   bool _hasOnboarded = false;
   String? _sessionNotice;
   String? _quickLoginError;
@@ -59,12 +64,35 @@ class AuthService extends ChangeNotifier {
   bool get needsBiometricUnlock => _needsBiometricUnlock;
   bool get needsPinUnlock => _needsPinUnlock;
   bool get loginPinEnabled => _loginPin != null;
+  int get loginPinFailedAttempts => _loginPinFailedAttempts;
   bool get hasOnboarded => _hasOnboarded;
   String? get sessionNotice => _sessionNotice;
   String? get quickLoginError => _quickLoginError;
 
-  Future<void> _handleUnauthorized() async {
-    if (_token == null) return;
+  Future<bool> _handleUnauthorized() async {
+    if (_token == null) return false;
+
+    if (_quickToken != null && (_loginPin != null || _biometricEnabled)) {
+      try {
+        final data = await _api.postPublic('/wali/quick-login', {
+          'quick_token': _quickToken,
+          'device_name': _deviceName(),
+        });
+        _token = data['token'] as String;
+        _quickToken = data['quick_token'] as String;
+        _user = WaliUser.fromJson(data['user'] as Map<String, dynamic>);
+        await _storage.write(key: 'token', value: _token);
+        await _storage.write(key: _quickTokenKey, value: _quickToken);
+        await _cacheCurrentUser();
+        _api.setToken(_token);
+        notifyListeners();
+        return true;
+      } catch (_) {
+        // Token pemulihan yang ditolak memang mewajibkan password. Gangguan
+        // jaringan tetap ditampilkan sebagai kegagalan request biasa.
+      }
+    }
+
     _sessionNotice =
         'Sesi Anda telah berakhir demi keamanan. Silakan masuk kembali untuk melanjutkan.';
     // Keep the locally configured PIN/biometric preference. The dead token
@@ -73,6 +101,7 @@ class AuthService extends ChangeNotifier {
     // login() clears it if a different account signs in.
     await _clearSession(clearQuickLogin: false);
     notifyListeners();
+    return false;
   }
 
   /// True when there's a retained token a fingerprint tap on the login
@@ -88,43 +117,66 @@ class AuthService extends ChangeNotifier {
   Future<void> restoreSession() async {
     try {
       _token = await _storage.read(key: 'token');
+      _quickToken = await _storage.read(key: _quickTokenKey);
       _biometricEnabled =
           await _storage.read(key: _biometricEnabledKey) == 'true';
       _loginPin = await _storage.read(key: _loginPinKey);
       _quickLoginUserId = int.tryParse(
         await _storage.read(key: _quickLoginUserIdKey) ?? '',
       );
+      _loginPinFailedAttempts =
+          int.tryParse(
+            await _storage.read(key: _loginPinFailedAttemptsKey) ?? '',
+          ) ??
+          0;
       _hasOnboarded = await _storage.read(key: _onboardedKey) == 'true';
 
       if (_token != null) {
         _api.setToken(_token);
-        try {
-          final data = await _api.get('/wali/me');
-          _user = WaliUser.fromJson(data as Map<String, dynamic>);
+        final cachedUser = await _storage.read(key: _cachedUserKey);
+        if (cachedUser != null) {
+          try {
+            _user = WaliUser.fromJson(
+              Map<String, dynamic>.from(jsonDecode(cachedUser) as Map),
+            );
+          } catch (_) {
+            await _storage.delete(key: _cachedUserKey);
+          }
+        }
+
+        // Profil terenkripsi lokal cukup untuk menentukan gerbang PIN atau
+        // biometrik saat proses aplikasi dimulai ulang. Validasi token tetap
+        // terjadi pada request API berikutnya; startup tidak perlu jatuh ke
+        // formulir password hanya karena jaringan sedang lambat.
+        if (_user != null) {
           await _adoptLegacyQuickLoginFor(_user!.id);
           _needsPinUnlock = _loginPin != null;
           _needsBiometricUnlock = _biometricEnabled && _loginPin == null;
           unawaited(_push.registerCurrentToken());
-        } on ApiException catch (error) {
-          if (error.statusCode != 401) {
-            // A timeout, maintenance window, or temporary hosting outage is
-            // not proof that the saved token is invalid. Retain token + PIN
-            // so "Masuk cepat" can retry /me when connectivity returns.
+        } else {
+          try {
+            final data = await _api.get('/wali/me');
+            _user = WaliUser.fromJson(data as Map<String, dynamic>);
+            await _cacheCurrentUser();
+            await _adoptLegacyQuickLoginFor(_user!.id);
+            _needsPinUnlock = _loginPin != null;
+            _needsBiometricUnlock = _biometricEnabled && _loginPin == null;
+            unawaited(_push.registerCurrentToken());
+          } on ApiException catch (error) {
+            if (error.statusCode != 401) {
+              // Gangguan koneksi bukan bukti bahwa sesi tersimpan tidak sah.
+              _user = null;
+              _api.setToken(_token);
+              _sessionNotice =
+                  'Sesi dan PIN Anda tetap tersimpan, tetapi server belum dapat dihubungi. Coba masuk dengan PIN saat koneksi kembali normal.';
+            }
+            // Respons 401 ditangani terpusat dan menghapus token yang mati.
+          } catch (_) {
             _user = null;
             _api.setToken(_token);
             _sessionNotice =
-                'Sesi dan PIN Anda tetap tersimpan, tetapi server belum dapat dihubungi. Coba masuk dengan PIN saat koneksi kembali normal.';
+                'Sesi dan PIN Anda tetap tersimpan. Server belum memberikan respons yang valid; silakan coba kembali.';
           }
-          // A genuine 401 has already been handled centrally by
-          // _handleUnauthorized(), which removes only the invalid token.
-        } catch (_) {
-          // Unexpected response/parsing failures also must not erase local
-          // credentials. A later PIN retry can recover once the server
-          // returns a valid response again.
-          _user = null;
-          _api.setToken(_token);
-          _sessionNotice =
-              'Sesi dan PIN Anda tetap tersimpan. Server belum memberikan respons yang valid; silakan coba kembali.';
         }
       }
 
@@ -167,16 +219,22 @@ class AuthService extends ChangeNotifier {
     });
 
     _token = data['token'] as String;
+    _quickToken = data['quick_token'] as String?;
     final nextUser = WaliUser.fromJson(data['user'] as Map<String, dynamic>);
     if (_quickLoginUserId != null && _quickLoginUserId != nextUser.id) {
       await _clearQuickLogin();
     }
     _user = nextUser;
+    await _cacheCurrentUser();
     await _adoptLegacyQuickLoginFor(_user!.id);
     _needsPinUnlock = false;
     _needsBiometricUnlock = false;
     _sessionNotice = null;
+    await _resetLoginPinAttempts();
     await _storage.write(key: 'token', value: _token);
+    if (_quickToken != null) {
+      await _storage.write(key: _quickTokenKey, value: _quickToken);
+    }
     _api.setToken(_token);
     unawaited(_push.registerCurrentToken());
     notifyListeners();
@@ -194,7 +252,13 @@ class AuthService extends ChangeNotifier {
       await _rememberQuickLoginOwner();
     } else {
       await _storage.delete(key: _biometricEnabledKey);
-      if (_loginPin == null) await _forgetQuickLoginOwner();
+      if (_loginPin == null) {
+        // No quick-login gate remains. Revoke the retained session so a
+        // process restart cannot bypass the requested password login.
+        await _hardLogout();
+        notifyListeners();
+        return;
+      }
     }
 
     notifyListeners();
@@ -206,6 +270,7 @@ class AuthService extends ChangeNotifier {
     }
     _loginPin = pin;
     await _storage.write(key: _loginPinKey, value: pin);
+    await _resetLoginPinAttempts();
     await _rememberQuickLoginOwner();
     notifyListeners();
   }
@@ -214,20 +279,28 @@ class AuthService extends ChangeNotifier {
     _loginPin = null;
     _needsPinUnlock = false;
     await _storage.delete(key: _loginPinKey);
-    if (!_biometricEnabled) await _forgetQuickLoginOwner();
+    await _resetLoginPinAttempts();
+    if (!_biometricEnabled) {
+      // Disabling the final quick-login method means future starts must use
+      // credentials, not a bearer token restored directly into the account.
+      await _hardLogout();
+      notifyListeners();
+      return;
+    }
     notifyListeners();
   }
 
-  /// Leaves quick-login mode and returns to the regular credential screen
-  /// without revoking the retained server session. PIN and biometric are a
-  /// single convenience/security preference: choosing "Gunakan Password"
+  /// Leaves quick-login mode, revokes the retained session, and returns to
+  /// the regular credential screen. PIN and biometric are a single
+  /// convenience/security preference: choosing "Gunakan Password"
   /// (also invoked after five wrong PIN attempts) disables both, so there
   /// is no second quick-login path silently left active.
   Future<void> usePasswordInsteadOfPin() async {
     _needsPinUnlock = false;
     _needsBiometricUnlock = false;
-    _user = null;
-    await _clearQuickLogin();
+    // Also revoke the retained token. Keeping it would let reopening the app
+    // restore /wali/me and silently skip the password screen.
+    await _hardLogout();
     notifyListeners();
   }
 
@@ -241,6 +314,29 @@ class AuthService extends ChangeNotifier {
     return true;
   }
 
+  /// Persist failures so removing the app from Recents cannot reset four
+  /// wrong attempts into unlimited offline guesses.
+  ///
+  /// Returns true when the fifth failure has disabled quick login and forced
+  /// a complete password login.
+  Future<bool> recordFailedLoginPinAttempt() async {
+    _loginPinFailedAttempts++;
+    await _storage.write(
+      key: _loginPinFailedAttemptsKey,
+      value: '$_loginPinFailedAttempts',
+    );
+
+    if (_loginPinFailedAttempts >= 5) {
+      await usePasswordInsteadOfPin();
+      return true;
+    }
+
+    notifyListeners();
+    return false;
+  }
+
+  Future<void> resetLoginPinAttemptsAfterSuccess() => _resetLoginPinAttempts();
+
   Future<BiometricAuthResult> unlockWithBiometrics() async {
     final result = await _biometric.authenticate();
 
@@ -248,6 +344,7 @@ class AuthService extends ChangeNotifier {
       _needsBiometricUnlock = false;
       _needsPinUnlock = false;
       _sessionNotice = null;
+      await _resetLoginPinAttempts();
       notifyListeners();
       _openPendingPush();
     }
@@ -271,6 +368,8 @@ class AuthService extends ChangeNotifier {
     try {
       final data = await _api.get('/wali/me');
       _user = WaliUser.fromJson(data as Map<String, dynamic>);
+      await _cacheCurrentUser();
+      await _resetLoginPinAttempts();
       unawaited(_push.registerCurrentToken());
       notifyListeners();
       _openPendingPush();
@@ -292,8 +391,10 @@ class AuthService extends ChangeNotifier {
     try {
       final data = await _api.get('/wali/me');
       _user = WaliUser.fromJson(data as Map<String, dynamic>);
+      await _cacheCurrentUser();
       _needsPinUnlock = false;
       _needsBiometricUnlock = false;
+      await _resetLoginPinAttempts();
       unawaited(_push.registerCurrentToken());
       notifyListeners();
       _openPendingPush();
@@ -349,6 +450,18 @@ class AuthService extends ChangeNotifier {
     });
 
     _user = WaliUser.fromJson(data as Map<String, dynamic>);
+    await _cacheCurrentUser();
+    notifyListeners();
+  }
+
+  Future<void> updateProfilePhoto(String filePath) async {
+    final data = await _api.postFile(
+      '/wali/profile/photo',
+      field: 'photo',
+      filePath: filePath,
+    );
+    _user = WaliUser.fromJson(data as Map<String, dynamic>);
+    await _cacheCurrentUser();
     notifyListeners();
   }
 
@@ -369,8 +482,10 @@ class AuthService extends ChangeNotifier {
       name: current.name,
       email: current.email,
       phone: current.phone,
+      photoUrl: current.photoUrl,
       mustChangePassword: false,
     );
+    await _cacheCurrentUser();
     notifyListeners();
   }
 
@@ -403,8 +518,6 @@ class AuthService extends ChangeNotifier {
   /// this, the next wali to log in on this device would silently inherit
   /// the previous wali's biometric consent instead of opting in themselves.
   Future<void> switchAccount() async {
-    await setBiometricEnabled(false);
-    await disableLoginPin();
     await _hardLogout();
     notifyListeners();
   }
@@ -412,13 +525,16 @@ class AuthService extends ChangeNotifier {
   /// Unregister while the bearer token is still valid - this call is
   /// itself authenticated, and _clearSession() below wipes it.
   Future<void> _hardLogout() async {
-    await _push.unregisterCurrentToken();
+    final hadToken = _token != null;
+    if (hadToken) {
+      await _push.unregisterCurrentToken();
 
-    try {
-      await _api.post('/wali/logout');
-    } catch (_) {
-      // Best-effort - still clear the local session even if the server
-      // call fails (e.g. token already expired), so the user isn't stuck.
+      try {
+        await _api.post('/wali/logout');
+      } catch (_) {
+        // Best-effort - still clear the local session even if the server
+        // call fails (e.g. token already expired), so the user isn't stuck.
+      }
     }
 
     await _clearSession();
@@ -426,11 +542,14 @@ class AuthService extends ChangeNotifier {
 
   Future<void> _clearSession({bool clearQuickLogin = true}) async {
     _token = null;
+    _quickToken = null;
     _user = null;
     _needsBiometricUnlock = false;
     _needsPinUnlock = false;
     _api.setToken(null);
     await _storage.delete(key: 'token');
+    await _storage.delete(key: _quickTokenKey);
+    await _storage.delete(key: _cachedUserKey);
     if (clearQuickLogin) await _clearQuickLogin();
   }
 
@@ -438,9 +557,17 @@ class AuthService extends ChangeNotifier {
     _loginPin = null;
     _biometricEnabled = false;
     _quickLoginUserId = null;
+    _loginPinFailedAttempts = 0;
     await _storage.delete(key: _loginPinKey);
     await _storage.delete(key: _biometricEnabledKey);
     await _storage.delete(key: _quickLoginUserIdKey);
+    await _storage.delete(key: _loginPinFailedAttemptsKey);
+  }
+
+  Future<void> _resetLoginPinAttempts() async {
+    if (_loginPinFailedAttempts == 0) return;
+    _loginPinFailedAttempts = 0;
+    await _storage.delete(key: _loginPinFailedAttemptsKey);
   }
 
   Future<void> _rememberQuickLoginOwner() async {
@@ -450,9 +577,20 @@ class AuthService extends ChangeNotifier {
     await _storage.write(key: _quickLoginUserIdKey, value: '$userId');
   }
 
-  Future<void> _forgetQuickLoginOwner() async {
-    _quickLoginUserId = null;
-    await _storage.delete(key: _quickLoginUserIdKey);
+  Future<void> _cacheCurrentUser() async {
+    final user = _user;
+    if (user == null) return;
+
+    await _storage.write(
+      key: _cachedUserKey,
+      value: jsonEncode({
+        'id': user.id,
+        'name': user.name,
+        'email': user.email,
+        'phone': user.phone,
+        'must_change_password': user.mustChangePassword,
+      }),
+    );
   }
 
   Future<void> _adoptLegacyQuickLoginFor(int userId) async {

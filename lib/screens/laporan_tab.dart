@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/anak.dart';
+import '../models/tabungan.dart';
 import '../models/transaksi.dart';
 import '../providers/anak_provider.dart';
 import '../providers/app_info_provider.dart';
@@ -103,7 +104,7 @@ class LaporanTab extends StatelessWidget {
             icon: const Icon(Icons.arrow_back_rounded),
             onPressed: () => context.read<TabIndexProvider>().go(0),
           ),
-          title: const Text('Laporan'),
+          title: const Text('Aktivitas Keuangan'),
           backgroundColor: Colors.white,
           foregroundColor: Colors.black87,
           elevation: 0,
@@ -121,9 +122,9 @@ class LaporanTab extends StatelessWidget {
               fontSize: 13,
             ),
             tabs: const [
-              Tab(text: 'Transaksi'),
+              Tab(text: 'Riwayat'),
               Tab(text: 'Pengeluaran'),
-              Tab(text: 'Laporan'),
+              Tab(text: 'Ringkasan'),
             ],
           ),
         ),
@@ -233,7 +234,13 @@ class _LaporanBodyState extends State<_LaporanBody> {
               sheetTitle: 'Filter Transaksi',
             ),
             _TransaksiListView(
-              items: all.where((t) => !t.isKredit).toList(),
+              // Perpindahan saldo ke tabungan bukan pengeluaran konsumtif.
+              // Mutasinya tetap tampil di Riwayat dan Ringkasan Tabungan.
+              items: all
+                  .where(
+                    (t) => !t.isKredit && t.jenis != 'transfer_ke_tabungan',
+                  )
+                  .toList(),
               onRefresh: _refresh,
               emptyMessage: 'Belum ada pengeluaran.',
               sheetTitle: 'Filter Pengeluaran',
@@ -351,22 +358,24 @@ class _TransaksiListViewState extends State<_TransaksiListView> {
                     ],
                   )
                 : ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    padding: const EdgeInsets.fromLTRB(0, 8, 0, 112),
                     children: [
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE2E8E4)),
+                          borderRadius: BorderRadius.zero,
+                          border: const Border(
+                            top: BorderSide(color: Color(0xFFE2E8E4)),
+                            bottom: BorderSide(color: Color(0xFFE2E8E4)),
+                          ),
                         ),
                         clipBehavior: Clip.antiAlias,
                         child: Column(
                           children: [
-                            for (final (label, group)
-                                in groupByRelativeDate(
-                                  items,
-                                  (t) => t.createdAt,
-                                ))
+                            for (final (label, group) in groupByRelativeDate(
+                              items,
+                              (t) => t.createdAt,
+                            ))
                               ..._buildRiwayatGroup(context, label, group),
                           ],
                         ),
@@ -508,10 +517,7 @@ List<Widget> _buildRiwayatGroup(
     for (var i = 0; i < group.length; i++) ...[
       TransaksiListItem(
         tx: group[i],
-        padding: const EdgeInsets.symmetric(
-          vertical: 12,
-          horizontal: 14,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => TransaksiDetailScreen(transaksi: group[i]),
@@ -544,6 +550,26 @@ class _LaporanRingkasanState extends State<_LaporanRingkasan> {
   DateRangePreset _periode = DateRangePreset.bulanIni;
   DateTimeRange? _customRange;
   bool _mengunduh = false;
+  RingkasanTabungan? _tabungan;
+  bool _memuatTabungan = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _muatTabungan();
+  }
+
+  Future<void> _muatTabungan() async {
+    try {
+      final hasil = await context.read<WaliApi>().getTabungan(widget.anak.id);
+      if (mounted) setState(() => _tabungan = hasil);
+    } catch (_) {
+      // Riwayat dan statement tetap dapat dipakai ketika endpoint tabungan
+      // sedang tidak tersedia. Nilainya ditandai belum tersedia, bukan nol.
+    } finally {
+      if (mounted) setState(() => _memuatTabungan = false);
+    }
+  }
 
   List<Transaksi> get _items => widget.all
       .where((t) => _cocokPeriode(t.createdAt, _periode, _customRange))
@@ -584,6 +610,7 @@ class _LaporanRingkasanState extends State<_LaporanRingkasan> {
         namaPondok:
             context.read<AppInfoProvider>().namaPondok ??
             'Pondok Pesantren Latee',
+        saldoTabungan: _tabungan?.saldo,
       );
     } finally {
       if (mounted) setState(() => _mengunduh = false);
@@ -593,11 +620,25 @@ class _LaporanRingkasanState extends State<_LaporanRingkasan> {
   @override
   Widget build(BuildContext context) {
     final items = _items;
-    final totalMasuk = items
-        .where((t) => t.isKredit)
+    final saldoMasuk = items
+        .where((t) => t.ledger == 'saldo' && t.isKredit)
         .fold<int>(0, (s, t) => s + t.nominal);
-    final totalKeluar = items
-        .where((t) => !t.isKredit)
+    final belanjaDanPenarikan = items
+        .where(
+          (t) =>
+              t.ledger == 'saldo' &&
+              !t.isKredit &&
+              t.jenis != 'transfer_ke_tabungan',
+        )
+        .fold<int>(0, (s, t) => s + t.nominal);
+    final tabunganDariSaldo = items
+        .where((t) => t.jenis == 'transfer_ke_tabungan')
+        .fold<int>(0, (s, t) => s + t.nominal);
+    final tabunganDariLuar = items
+        .where((t) => t.ledger == 'tabungan' && t.isKredit)
+        .fold<int>(0, (s, t) => s + t.nominal);
+    final pembayaranDiLuarSaldo = items
+        .where((t) => t.ledger == 'tagihan')
         .fold<int>(0, (s, t) => s + t.nominal);
 
     final perJenis = <String, ({int jumlah, int total})>{};
@@ -610,7 +651,7 @@ class _LaporanRingkasanState extends State<_LaporanRingkasan> {
     }
 
     return RefreshIndicator(
-      onRefresh: () async {},
+      onRefresh: _muatTabungan,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
         children: [
@@ -631,8 +672,14 @@ class _LaporanRingkasanState extends State<_LaporanRingkasan> {
               children: [
                 const SizedBox(height: 4),
                 _FinancialSummaryCard(
-                  totalMasuk: totalMasuk,
-                  totalKeluar: totalKeluar,
+                  saldoSaatIni: widget.anak.saldo,
+                  saldoTabungan: _tabungan?.saldo,
+                  memuatTabungan: _memuatTabungan,
+                  saldoMasuk: saldoMasuk,
+                  belanjaDanPenarikan: belanjaDanPenarikan,
+                  tabunganDariSaldo: tabunganDariSaldo,
+                  tabunganDariLuar: tabunganDariLuar,
+                  pembayaranDiLuarSaldo: pembayaranDiLuarSaldo,
                 ),
                 const SizedBox(height: 22),
                 Align(
@@ -756,19 +803,28 @@ class _LaporanRingkasanState extends State<_LaporanRingkasan> {
 }
 
 class _FinancialSummaryCard extends StatelessWidget {
-  final int totalMasuk;
-  final int totalKeluar;
+  final int saldoSaatIni;
+  final int? saldoTabungan;
+  final bool memuatTabungan;
+  final int saldoMasuk;
+  final int belanjaDanPenarikan;
+  final int tabunganDariSaldo;
+  final int tabunganDariLuar;
+  final int pembayaranDiLuarSaldo;
 
   const _FinancialSummaryCard({
-    required this.totalMasuk,
-    required this.totalKeluar,
+    required this.saldoSaatIni,
+    required this.saldoTabungan,
+    required this.memuatTabungan,
+    required this.saldoMasuk,
+    required this.belanjaDanPenarikan,
+    required this.tabunganDariSaldo,
+    required this.tabunganDariLuar,
+    required this.pembayaranDiLuarSaldo,
   });
 
   @override
   Widget build(BuildContext context) {
-    final selisih = totalMasuk - totalKeluar;
-    final selisihColor = selisih < 0 ? const Color(0xFFB91C1C) : _teal;
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -780,63 +836,120 @@ class _FinancialSummaryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Ringkasan Periode',
+            'Posisi Saldo Saat Ini',
             style: TextStyle(
               color: Color(0xFF64748B),
               fontSize: 11.5,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            formatRupiah(selisih),
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: selisihColor,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            selisih < 0
-                ? 'Pengeluaran lebih besar dari pemasukan'
-                : 'Selisih pemasukan dan pengeluaran',
-            style: const TextStyle(
-              color: Color(0xFF94A3B8),
-              fontSize: 11,
-            ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _SummaryMetric(
+                  label: 'Saldo Belanja',
+                  value: formatRupiah(saldoSaatIni),
+                  icon: Icons.account_balance_wallet_outlined,
+                  color: _teal,
+                ),
+              ),
+              Container(width: 1, height: 42, color: const Color(0xFFEEF0F3)),
+              const SizedBox(width: 14),
+              Expanded(
+                child: _SummaryMetric(
+                  label: 'Tabungan',
+                  value: memuatTabungan
+                      ? 'Memuat...'
+                      : saldoTabungan == null
+                      ? 'Tidak tersedia'
+                      : formatRupiah(saldoTabungan!),
+                  icon: Icons.savings_outlined,
+                  color: const Color(0xFF7C3AED),
+                ),
+              ),
+            ],
           ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 14),
             child: Divider(height: 1, color: Color(0xFFEEF0F3)),
           ),
-          Row(
-            children: [
-              Expanded(
-                child: _SummaryMetric(
-                  label: 'Total Masuk',
-                  value: formatRupiah(totalMasuk),
-                  icon: Icons.south_rounded,
-                  color: const Color(0xFF15803D),
-                ),
-              ),
-              Container(
-                width: 1,
-                height: 42,
-                color: const Color(0xFFEEF0F3),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: _SummaryMetric(
-                  label: 'Total Keluar',
-                  value: formatRupiah(totalKeluar),
-                  icon: Icons.north_rounded,
-                  color: const Color(0xFFB91C1C),
-                ),
-              ),
-            ],
+          const Text(
+            'Mutasi Periode',
+            style: TextStyle(
+              color: Color(0xFF64748B),
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          _StatementRow(
+            label: 'Saldo masuk',
+            value: saldoMasuk,
+            color: const Color(0xFF15803D),
+          ),
+          _StatementRow(
+            label: 'Belanja & penarikan',
+            value: belanjaDanPenarikan,
+            color: const Color(0xFFB91C1C),
+          ),
+          _StatementRow(
+            label: 'Dipindah ke tabungan',
+            value: tabunganDariSaldo,
+            color: const Color(0xFF7C3AED),
+          ),
+          _StatementRow(
+            label: 'Setoran tabungan dari luar',
+            value: tabunganDariLuar,
+            color: const Color(0xFF7C3AED),
+          ),
+          if (pembayaranDiLuarSaldo > 0)
+            _StatementRow(
+              label: 'Tagihan dibayar di luar saldo',
+              value: pembayaranDiLuarSaldo,
+              color: const Color(0xFF475569),
+            ),
+          const SizedBox(height: 8),
+          const Text(
+            'Perpindahan ke tabungan bukan pengeluaran. Tabungan tidak dapat dipakai untuk membayar tagihan.',
+            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatementRow extends StatelessWidget {
+  final String label;
+  final int value;
+  final Color color;
+
+  const _StatementRow({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)),
+            ),
+          ),
+          Text(
+            formatRupiah(value),
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
           ),
         ],
       ),
