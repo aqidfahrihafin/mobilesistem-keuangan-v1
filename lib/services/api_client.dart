@@ -13,6 +13,29 @@ const _requestTimeout = Duration(seconds: 15);
 /// login screen to warn the user before they even try to submit.
 enum ServerStatus { ok, maintenance, unreachable }
 
+class MaintenanceInfo {
+  final bool active;
+  final String message;
+  final DateTime? expectedEndAt;
+
+  const MaintenanceInfo({
+    required this.active,
+    required this.message,
+    this.expectedEndAt,
+  });
+
+  factory MaintenanceInfo.fromJson(Map<String, dynamic> json) {
+    return MaintenanceInfo(
+      active: json['maintenance'] == true,
+      message: json['message']?.toString() ??
+          'Sistem sedang dalam pemeliharaan. Silakan coba lagi nanti.',
+      expectedEndAt: DateTime.tryParse(
+        json['expected_end_at']?.toString() ?? '',
+      )?.toLocal(),
+    );
+  }
+}
+
 /// Thrown for every non-2xx response, carrying Laravel's standard error
 /// shape ({"message": "...", "errors": {"field": ["..."]}}) so screens can
 /// show field-level validation messages the same way the web app does.
@@ -37,11 +60,34 @@ class ApiException implements Exception {
 class ApiClient {
   String? _token;
   FutureOr<bool> Function()? _onUnauthorized;
+  void Function(MaintenanceInfo info)? _onMaintenance;
   bool _handlingUnauthorized = false;
 
   void setToken(String? token) => _token = token;
   void setUnauthorizedHandler(FutureOr<bool> Function() handler) {
     _onUnauthorized = handler;
+  }
+  void setMaintenanceHandler(void Function(MaintenanceInfo info) handler) {
+    _onMaintenance = handler;
+  }
+
+  Future<MaintenanceInfo?> fetchMaintenanceStatus() async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse('${ApiConfig.baseUrl}/system/status'),
+            headers: {'Accept': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 6));
+      if (response.statusCode < 200 || response.statusCode >= 300) return null;
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map || decoded['data'] is! Map) return null;
+      return MaintenanceInfo.fromJson(
+        Map<String, dynamic>.from(decoded['data'] as Map),
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Pings the API host so the login screen can warn the user up front if
@@ -105,6 +151,25 @@ class ApiClient {
           : null;
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return decoded;
+      }
+      if (response.statusCode == 503) {
+        final payload = decoded is Map<String, dynamic>
+            ? decoded
+            : <String, dynamic>{};
+        final rawInfo = payload['maintenance'] is Map
+            ? Map<String, dynamic>.from(payload['maintenance'] as Map)
+            : <String, dynamic>{};
+        final info = MaintenanceInfo.fromJson({
+          ...rawInfo,
+          'maintenance': true,
+          'message': payload['message'],
+        });
+        _onMaintenance?.call(info);
+        throw ApiException(
+          info.message,
+          statusCode: 503,
+          code: 'maintenance_mode',
+        );
       }
       final errors = decoded is Map && decoded['errors'] is Map
           ? (decoded['errors'] as Map).map(
@@ -203,9 +268,28 @@ class ApiClient {
     }
 
     if (response.statusCode == 503) {
+      MaintenanceInfo info;
+      try {
+        final payload = jsonDecode(response.body);
+        final maintenance = payload is Map && payload['maintenance'] is Map
+            ? Map<String, dynamic>.from(payload['maintenance'] as Map)
+            : <String, dynamic>{};
+        info = MaintenanceInfo.fromJson({
+          ...maintenance,
+          'maintenance': true,
+          'message': payload is Map ? payload['message'] : null,
+        });
+      } catch (_) {
+        info = const MaintenanceInfo(
+          active: true,
+          message: 'Sistem sedang dalam pemeliharaan. Silakan coba lagi nanti.',
+        );
+      }
+      _onMaintenance?.call(info);
       throw ApiException(
-        'Server sedang dalam pemeliharaan (maintenance). Silakan coba lagi nanti.',
+        info.message,
         statusCode: 503,
+        code: 'maintenance_mode',
       );
     }
 

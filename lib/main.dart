@@ -7,8 +7,10 @@ import 'package:provider/provider.dart';
 import 'providers/anak_provider.dart';
 import 'providers/app_info_provider.dart';
 import 'providers/banner_provider.dart';
+import 'providers/maintenance_provider.dart';
 import 'providers/tab_index_provider.dart';
 import 'screens/auth_gate.dart';
+import 'screens/maintenance_screen.dart';
 import 'services/api_client.dart';
 import 'services/auth_service.dart';
 import 'services/biometric_service.dart';
@@ -51,6 +53,9 @@ Future<void> main() async {
         ),
         ChangeNotifierProvider<TabIndexProvider>(
           create: (_) => TabIndexProvider(),
+        ),
+        ChangeNotifierProvider<MaintenanceProvider>(
+          create: (_) => MaintenanceProvider(apiClient),
         ),
       ],
       child: WaliSantriApp(navigatorKey: navigatorKey),
@@ -101,7 +106,13 @@ class WaliSantriApp extends StatelessWidget {
               maxScaleFactor: 1.15,
             ),
           ),
-          child: AppBackground(child: child!),
+          child: Consumer<MaintenanceProvider>(
+            builder: (context, maintenance, _) => AppBackground(
+              child: maintenance.active
+                  ? const MaintenanceScreen()
+                  : child!,
+            ),
+          ),
         );
       },
       home: const SessionActivityGuard(child: AuthGate()),
