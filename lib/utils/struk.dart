@@ -7,17 +7,16 @@ import '../models/tagihan.dart';
 import '../models/unit_usaha.dart';
 import 'formatters.dart';
 
-/// Renders an official numbered kwitansi (80mm thermal roll width) for a
-/// tagihan that has at least one payment recorded, then hands it to the OS
+const _brand = PdfColors.teal700;
+
+/// Renders a current tagihan status slip (80mm thermal roll width), then
+/// hands it to the OS
 /// print sheet - which also covers "save as PDF" and "share" without extra
 /// UI.
 ///
-/// The kwitansi number is derived client-side from the tagihan's own
-/// (stable, unique, database-assigned) id - `GET /wali/anak/{santri}/tagihan`
-/// still doesn't expose a separately-tracked kwitansi-number sequence or
-/// `dicatat_oleh`, so there's no "who recorded this" line; everything else
-/// needed for a real numbered receipt (jenis, periode, nominal, status) is
-/// already available.
+/// This is deliberately not called a kwitansi: official receipts use the
+/// server-issued permanent KWT number and are downloaded from transaction
+/// detail. This local document is a cumulative snapshot of the bill.
 Future<void> cetakStrukTagihan({
   required Anak anak,
   required Tagihan tagihan,
@@ -25,8 +24,7 @@ Future<void> cetakStrukTagihan({
 }) async {
   final doc = pw.Document();
   final now = DateTime.now();
-  final nomorKwitansi =
-      '${tagihan.jenisTagihanKode.toUpperCase()}/${tagihan.id}/${now.year}';
+  final referensi = 'TGH-${tagihan.id.toString().padLeft(6, '0')}';
 
   doc.addPage(
     pw.Page(
@@ -38,14 +36,18 @@ Future<void> cetakStrukTagihan({
           pw.Center(
             child: pw.Text(
               namaPondok.toUpperCase(),
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11),
+              style: pw.TextStyle(
+                fontWeight: pw.FontWeight.bold,
+                fontSize: 11,
+                color: _brand,
+              ),
               textAlign: pw.TextAlign.center,
             ),
           ),
           pw.SizedBox(height: 2),
           pw.Center(
             child: pw.Text(
-              'KWITANSI PEMBAYARAN',
+              'RINGKASAN STATUS TAGIHAN',
               style: pw.TextStyle(
                 fontWeight: pw.FontWeight.bold,
                 fontSize: 9,
@@ -54,7 +56,9 @@ Future<void> cetakStrukTagihan({
             ),
           ),
           pw.SizedBox(height: 8),
-          _row('No. Kwitansi', nomorKwitansi, bold: true),
+          pw.Container(height: 1.2, color: _brand),
+          pw.SizedBox(height: 8),
+          _row('Referensi Tagihan', referensi, bold: true),
           _row('Tanggal', formatTanggalWaktu(now)),
           pw.SizedBox(height: 6),
           _dashedDivider(),
@@ -97,7 +101,10 @@ Future<void> cetakStrukTagihan({
                 horizontal: 10,
                 vertical: 4,
               ),
-              decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.7)),
+              decoration: pw.BoxDecoration(
+                color: PdfColors.teal50,
+                border: pw.Border.all(color: _brand, width: 0.7),
+              ),
               child: pw.Text(
                 statusTagihanLabel[tagihan.status]?.toUpperCase() ??
                     tagihan.status.toUpperCase(),
@@ -111,7 +118,7 @@ Future<void> cetakStrukTagihan({
           pw.SizedBox(height: 16),
           pw.Center(
             child: pw.Text(
-              'Dicetak otomatis oleh sistem',
+              'Ringkasan ini bukan kwitansi resmi. Unduh kwitansi resmi bernomor KWT dari detail transaksi.',
               style: const pw.TextStyle(
                 fontSize: 7.5,
                 color: PdfColors.grey700,
@@ -133,15 +140,14 @@ Future<void> cetakStrukTagihan({
   await Printing.layoutPdf(onLayout: (format) async => doc.save());
 }
 
-/// Same idea as [cetakStrukTagihan] but for a kantin/unit-usaha purchase -
-/// the kwitansi number is derived from the underlying Transaksi's own id,
-/// the one stable reference the API already returns for this payment.
+/// Local transaction proof for a just-completed kantin payment. The
+/// official KWT-numbered receipt remains the signed server PDF.
 Future<void> cetakStrukKantin(
   KantinPembayaranResult hasil, {
   required String namaPondok,
 }) async {
   final doc = pw.Document();
-  final nomorKwitansi = 'KANTIN/${hasil.id}/${hasil.dibayarAt.year}';
+  final referensi = 'TX-${hasil.id.toString().padLeft(6, '0')}';
 
   doc.addPage(
     pw.Page(
@@ -153,14 +159,18 @@ Future<void> cetakStrukKantin(
           pw.Center(
             child: pw.Text(
               namaPondok.toUpperCase(),
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11),
+              style: pw.TextStyle(
+                fontWeight: pw.FontWeight.bold,
+                fontSize: 11,
+                color: _brand,
+              ),
               textAlign: pw.TextAlign.center,
             ),
           ),
           pw.SizedBox(height: 2),
           pw.Center(
             child: pw.Text(
-              'KWITANSI PEMBAYARAN KANTIN',
+              'BUKTI TRANSAKSI KANTIN',
               style: pw.TextStyle(
                 fontWeight: pw.FontWeight.bold,
                 fontSize: 9,
@@ -169,7 +179,9 @@ Future<void> cetakStrukKantin(
             ),
           ),
           pw.SizedBox(height: 8),
-          _row('No. Kwitansi', nomorKwitansi, bold: true),
+          pw.Container(height: 1.2, color: _brand),
+          pw.SizedBox(height: 8),
+          _row('Referensi Transaksi', referensi, bold: true),
           _row('Tanggal', formatTanggalWaktu(hasil.dibayarAt)),
           pw.SizedBox(height: 6),
           _dashedDivider(),
@@ -196,7 +208,7 @@ Future<void> cetakStrukKantin(
           pw.SizedBox(height: 16),
           pw.Center(
             child: pw.Text(
-              'Dicetak otomatis oleh sistem',
+              'Bukti ini bukan kwitansi resmi. Kwitansi resmi bernomor KWT tersedia di detail transaksi.',
               style: const pw.TextStyle(
                 fontSize: 7.5,
                 color: PdfColors.grey700,

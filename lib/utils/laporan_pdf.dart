@@ -7,6 +7,7 @@ import '../models/transaksi.dart';
 import 'formatters.dart';
 
 const _border = PdfColors.grey300;
+const _brand = PdfColors.teal700;
 const _metodePdfLabel = {
   'tunai': 'Tunai',
   'transfer_bank': 'Transfer Bank',
@@ -36,6 +37,7 @@ Future<void> cetakLaporanTransaksi({
   required Anak anak,
   required List<Transaksi> items,
   required String periodeLabel,
+  required String namaAplikasi,
   required String namaPondok,
   int? saldoTabungan,
 }) async {
@@ -43,6 +45,7 @@ Future<void> cetakLaporanTransaksi({
     anak: anak,
     items: items,
     periodeLabel: periodeLabel,
+    namaAplikasi: namaAplikasi,
     namaPondok: namaPondok,
     saldoTabungan: saldoTabungan,
   );
@@ -57,6 +60,7 @@ Future<pw.Document> buildLaporanTransaksiDocument({
   required Anak anak,
   required List<Transaksi> items,
   required String periodeLabel,
+  required String namaAplikasi,
   required String namaPondok,
   int? saldoTabungan,
 }) async {
@@ -95,18 +99,27 @@ Future<pw.Document> buildLaporanTransaksiDocument({
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Text(
-                  namaPondok.toUpperCase(),
+                  namaAplikasi,
                   style: pw.TextStyle(
                     fontWeight: pw.FontWeight.bold,
                     fontSize: 14,
+                    color: _brand,
                   ),
                 ),
                 pw.Text(
-                  'Laporan Transaksi Santri',
+                  namaPondok,
                   style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
                 ),
+                pw.SizedBox(height: 3),
+                pw.Text(
+                  'E-STATEMENT TRANSAKSI SANTRI',
+                  style: pw.TextStyle(
+                    fontWeight: pw.FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                ),
                 pw.SizedBox(height: 12),
-                pw.Container(height: 0.7, color: _border),
+                pw.Container(height: 1.5, color: _brand),
                 pw.SizedBox(height: 12),
               ],
             )
@@ -175,10 +188,10 @@ Future<pw.Document> buildLaporanTransaksiDocument({
           },
           children: [
             pw.TableRow(
-              decoration: const pw.BoxDecoration(color: PdfColors.grey100),
+              decoration: const pw.BoxDecoration(color: _brand),
               children: [
-                _ringkasanHeader('Saldo Belanja (IDR)'),
-                _ringkasanHeader('Saldo Tabungan (IDR)'),
+                _tableHeader('Saldo Belanja (IDR)'),
+                _tableHeader('Saldo Tabungan (IDR)'),
               ],
             ),
             pw.TableRow(
@@ -270,13 +283,13 @@ Future<pw.Document> buildLaporanTransaksiDocument({
             },
             children: [
               pw.TableRow(
-                decoration: const pw.BoxDecoration(color: PdfColors.grey100),
+                decoration: const pw.BoxDecoration(color: _brand),
                 children: [
-                  _rincianHeader('Tanggal'),
-                  _rincianHeader('Transaksi'),
-                  _rincianHeader('Keluar (IDR)', alignRight: true),
-                  _rincianHeader('Masuk (IDR)', alignRight: true),
-                  _rincianHeader('Ledger'),
+                  _rincianHeader('Tanggal', light: true),
+                  _rincianHeader('Transaksi', light: true),
+                  _rincianHeader('Keluar (IDR)', alignRight: true, light: true),
+                  _rincianHeader('Masuk (IDR)', alignRight: true, light: true),
+                  _rincianHeader('Ledger', light: true),
                 ],
               ),
               ...sorted.map(
@@ -378,13 +391,35 @@ pw.Widget _transaksiCell(Transaksi t) {
   );
 }
 
-pw.Widget _rincianHeader(String text, {bool alignRight = false}) {
+pw.Widget _rincianHeader(
+  String text, {
+  bool alignRight = false,
+  bool light = false,
+}) {
   return pw.Padding(
     padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 7),
     child: pw.Text(
       text,
       textAlign: alignRight ? pw.TextAlign.right : pw.TextAlign.left,
-      style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 8.5),
+      style: pw.TextStyle(
+        fontWeight: pw.FontWeight.bold,
+        fontSize: 8.5,
+        color: light ? PdfColors.white : PdfColors.black,
+      ),
+    ),
+  );
+}
+
+pw.Widget _tableHeader(String text) {
+  return pw.Padding(
+    padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+    child: pw.Text(
+      text,
+      style: pw.TextStyle(
+        fontSize: 8,
+        fontWeight: pw.FontWeight.bold,
+        color: PdfColors.white,
+      ),
     ),
   );
 }

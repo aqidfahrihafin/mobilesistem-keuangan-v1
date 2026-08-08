@@ -607,6 +607,9 @@ class _LaporanRingkasanState extends State<_LaporanRingkasan> {
         anak: widget.anak,
         items: _items,
         periodeLabel: _periodeLabel(_periode, _customRange),
+        namaAplikasi:
+            context.read<AppInfoProvider>().namaAplikasi ??
+            'Sistem Keuangan Santri',
         namaPondok:
             context.read<AppInfoProvider>().namaPondok ??
             'Pondok Pesantren Latee',

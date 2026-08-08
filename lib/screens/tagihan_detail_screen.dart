@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/anak.dart';
 import '../models/tagihan.dart';
+import '../services/wali_api.dart';
 import '../utils/formatters.dart';
 import '../utils/jatuh_tempo.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/tagihan_bayar_flow.dart';
+import 'kwitansi_preview_screen.dart';
 
 const _bg = Color(0xFFF3F8F7);
 const _teal = Color(0xFF0F766E);
@@ -33,6 +36,39 @@ class _TagihanDetailScreenState extends State<TagihanDetailScreen> {
   late Tagihan _tagihan = widget.tagihan;
   bool _berubah = false;
   bool _membukaPembayaran = false;
+  int? _kwitansiLoadingId;
+
+  Future<void> _muatUlang() async {
+    final fresh = await context.read<WaliApi>().getTagihanDetail(
+      widget.anak.id,
+      _tagihan.id,
+    );
+    if (mounted) setState(() => _tagihan = fresh);
+  }
+
+  Future<void> _unduhKwitansi(TagihanPembayaran pembayaran) async {
+    final id = pembayaran.kwitansiId;
+    if (id == null || _kwitansiLoadingId != null) return;
+    setState(() => _kwitansiLoadingId = id);
+    try {
+      final pdf = await context.read<WaliApi>().getKwitansiPdf(id);
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) =>
+              KwitansiPreviewScreen(nomor: pdf.nomor, bytes: pdf.bytes),
+        ),
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal membuka kwitansi. Coba lagi.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _kwitansiLoadingId = null);
+    }
+  }
 
   Future<void> _bayar() async {
     if (_membukaPembayaran) return;
@@ -46,24 +82,8 @@ class _TagihanDetailScreenState extends State<TagihanDetailScreen> {
       // for a full payment and leaving the rest to whoever refreshes the
       // list behind it (see PopScope below, which reports back via `true`).
       if (berhasil && mounted) {
-        setState(() {
-          _berubah = true;
-          if (_tagihan.bisaDicicil) return;
-          _tagihan = Tagihan(
-            id: _tagihan.id,
-            jenisTagihanKode: _tagihan.jenisTagihanKode,
-            jenisTagihanNama: _tagihan.jenisTagihanNama,
-            bisaDicicil: _tagihan.bisaDicicil,
-            periodeLabel: _tagihan.periodeLabel,
-            nominal: _tagihan.nominal,
-            nominalSebelumDiskon: _tagihan.nominalSebelumDiskon,
-            diskonPersen: _tagihan.diskonPersen,
-            nominalTerbayar: _tagihan.nominal,
-            sisa: 0,
-            status: 'lunas',
-            jatuhTempo: _tagihan.jatuhTempo,
-          );
-        });
+        _berubah = true;
+        await _muatUlang();
       }
     } finally {
       if (mounted) setState(() => _membukaPembayaran = false);
@@ -276,6 +296,114 @@ class _TagihanDetailScreenState extends State<TagihanDetailScreen> {
                     ],
                   ),
                 ),
+                if (tagihan.pembayaran.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFE9EBEF)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Riwayat Pembayaran dan Kwitansi',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Setiap cicilan memiliki kwitansi resmi tersendiri.',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 11.5,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ...tagihan.pembayaran.map(
+                          (pembayaran) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8FAF9),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: const Color(0xFFE2E8E4),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          formatRupiah(pembayaran.nominal),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 3),
+                                        Text(
+                                          pembayaran.sumberLabel,
+                                          style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize: 11.5,
+                                          ),
+                                        ),
+                                        if (pembayaran.dibayarAt != null)
+                                          Text(
+                                            formatTanggalWaktu(
+                                              pembayaran.dibayarAt!,
+                                            ),
+                                            style: TextStyle(
+                                              color: Colors.grey[500],
+                                              fontSize: 11,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (pembayaran.kwitansiId != null)
+                                    TextButton.icon(
+                                      onPressed: _kwitansiLoadingId == null
+                                          ? () => _unduhKwitansi(pembayaran)
+                                          : null,
+                                      icon:
+                                          _kwitansiLoadingId ==
+                                              pembayaran.kwitansiId
+                                          ? const SizedBox(
+                                              width: 14,
+                                              height: 14,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            )
+                                          : const Icon(
+                                              Icons.picture_as_pdf_outlined,
+                                              size: 17,
+                                            ),
+                                      label: Text(
+                                        pembayaran.nomorKwitansi ?? 'Kwitansi',
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 if (showActions) ...[
                   const SizedBox(height: 24),
                   Row(
@@ -296,8 +424,8 @@ class _TagihanDetailScreenState extends State<TagihanDetailScreen> {
                               ),
                               label: Text(
                                 tagihan.lunas
-                                    ? 'Unduh Bukti Pembayaran'
-                                    : 'Unduh Struk',
+                                    ? 'Unduh Ringkasan'
+                                    : 'Ringkasan Tagihan',
                               ),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: _teal,

@@ -11,6 +11,7 @@ class Tagihan {
   final int sisa;
   final String status;
   final String? jatuhTempo;
+  final List<TagihanPembayaran> pembayaran;
 
   Tagihan({
     required this.id,
@@ -25,6 +26,7 @@ class Tagihan {
     required this.sisa,
     required this.status,
     this.jatuhTempo,
+    this.pembayaran = const [],
   });
 
   bool get lunas => status == 'lunas';
@@ -54,7 +56,9 @@ class Tagihan {
 
     bool readBool(Object? value) {
       if (value is bool) return value;
-      return value == 1 || value?.toString() == '1' || value?.toString() == 'true';
+      return value == 1 ||
+          value?.toString() == '1' ||
+          value?.toString() == 'true';
     }
 
     return Tagihan(
@@ -70,6 +74,49 @@ class Tagihan {
       sisa: readInt(json['sisa']),
       status: json['status']?.toString() ?? 'belum_lunas',
       jatuhTempo: json['jatuh_tempo']?.toString(),
+      pembayaran: (json['pembayaran'] as List? ?? const [])
+          .map(
+            (e) =>
+                TagihanPembayaran.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
+          .toList(),
+    );
+  }
+}
+
+class TagihanPembayaran {
+  final int id;
+  final int nominal;
+  final String sumber;
+  final String sumberLabel;
+  final DateTime? dibayarAt;
+  final int? kwitansiId;
+  final String? nomorKwitansi;
+
+  const TagihanPembayaran({
+    required this.id,
+    required this.nominal,
+    required this.sumber,
+    required this.sumberLabel,
+    this.dibayarAt,
+    this.kwitansiId,
+    this.nomorKwitansi,
+  });
+
+  factory TagihanPembayaran.fromJson(Map<String, dynamic> json) {
+    final kwitansi = json['kwitansi'] as Map<String, dynamic>?;
+    return TagihanPembayaran(
+      id: (json['id'] as num).toInt(),
+      nominal: (json['nominal'] as num).toInt(),
+      sumber: json['sumber']?.toString() ?? '-',
+      sumberLabel: json['sumber_label']?.toString() ?? '-',
+      dibayarAt: json['dibayar_at'] == null
+          ? null
+          : DateTime.tryParse(json['dibayar_at'].toString())?.toLocal(),
+      kwitansiId: kwitansi?['id'] == null
+          ? null
+          : (kwitansi!['id'] as num).toInt(),
+      nomorKwitansi: kwitansi?['nomor']?.toString(),
     );
   }
 }

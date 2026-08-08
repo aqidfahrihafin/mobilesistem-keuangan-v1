@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:wali_santri/main.dart';
 import 'package:wali_santri/providers/app_info_provider.dart';
+import 'package:wali_santri/providers/maintenance_provider.dart';
 import 'package:wali_santri/services/api_client.dart';
 import 'package:wali_santri/services/auth_service.dart';
 import 'package:wali_santri/services/biometric_service.dart';
@@ -48,6 +49,9 @@ void main() {
             ),
             ChangeNotifierProvider<AppInfoProvider>(
               create: (_) => AppInfoProvider(waliApi),
+            ),
+            ChangeNotifierProvider<MaintenanceProvider>(
+              create: (_) => MaintenanceProvider(apiClient),
             ),
           ],
           child: WaliSantriApp(navigatorKey: navigatorKey),
